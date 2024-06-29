@@ -1,0 +1,4 @@
+assets/uploads
+assets/fork*
+venv
+__pycache__

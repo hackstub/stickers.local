@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <title>Stickers printer</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fork-awesome.min.css') }}">
+    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='tailwind.css') }}"> -->
+    <script src="{{ url_for('static', filename='tailwind-css.js') }}"></script>
+
+  <style type="text/tailwindcss">
+        @layer utilities {
+          input, textarea, select {
+              @apply rounded-md shadow-sm border-gray-200 bg-neutral-50;
+          }
+          .btn {
+              @apply text-sm font-medium rounded-md px-4 py-2 transition;
+          }
+          .btn-sm {
+              @apply text-xs font-medium rounded-md px-2 py-2 transition;
+          }
+          .btn-success {
+              @apply text-white bg-green-500 hover:bg-green-700;
+          }
+          .btn-primary {
+              @apply text-white bg-blue-500 hover:bg-blue-700;
+          }
+        }
+  </style>
+  </head>
+
+  <body class="font-mono bg-neutral-50 text-gray-800">
+
+      <main class="mx-auto max-w-screen-md pt-5">
+        {% block main %}
+        {% endblock %}
+      </main>
+
+      <footer class="h-5 my-5 text-center">
+        <p>
+           Made with <i class='text-red-500 fa fa-heart-o' aria-label='love'></i> using <a class='text-blue-800 dark:text-blue-400' href='https://flask.palletsprojects.com'>Flask</a> and <a class='text-blue-800 dark:text-blue-400' href='https://tailwindcss.com/'>TailwindCSS</a>
+        </p>
+      </footer>
+
+  </body>
+</html>
