@@ -1,11 +1,11 @@
 target="$1"
 processing="$2"
 
-if [[ "$processing" == "dithering+resize+cropping" ]]
+set -x
+
+if [[ "$processing" == "dithering+resize" ]]
 then
     tmpdir=$(mktemp -d)
-    tmpdir2=$(mktemp -d)
-    mv "$target" $tmpdir/
     #convert "$tmpdir/$(basename $target)" \
     #    -background white \
     #    -alpha remove \
@@ -18,19 +18,30 @@ then
     #    -extent 991x306 \
     #    "$target"
 
+    target_png="${target%.*}".png
+    if [[ "$target_png" != "$target" ]]
+    then
+        convert "$target" "$target_png"
+        rm "$target"
+        target="$target_png"
+    fi
+
     # From https://github.com/makew0rld/didder/releases
-    $(dirname $0)/didder_1.3.0_linux_64-bit \
-        --strength 70% \
-        --contrast 0.1 \
+    mv "$target" $tmpdir/
+        #--contrast 0.1 \
+    ./scripts/didder_1.3.0_linux_64-bit \
+        --height 696 \
+        --brightness 0.5 \
         --palette "black white" \
-        --width 991 \
-        --input "$tmpdir/$(basename $target)" \
-        --ouput "$tmpdir2/$target" \
+        --in "$tmpdir/$(basename $target)" \
+        --out "$target" \
         edm --serpentine FloydSteinberg
 
-    convert "$tmpdir2/$(basename $target)" \
-        -resize 991x \
-        -gravity Center \
-        -extent 991x306 \
-        "$target"
+    #convert "$tmpdir2/$(basename $target)" \
+    #    -resize 991x \
+    #    -gravity Center \
+    #    -extent 991x306 \
+    #    "$target"
+   
+    rm -rf "$tmpdir"
 fi

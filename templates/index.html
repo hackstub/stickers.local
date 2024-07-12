@@ -6,8 +6,8 @@
     {% for sticker in stickers %}
         <div class="relative flex flex-col text-center bg-gray-300">
             <a class="absolute top-0 right-0 bg-red-500 text-white text-xs p-0 h-4 w-4" href="{{ url_for('delete', name=sticker) }}">x</a>
-            <img class="max-h-36 object-contain" src="{{ url_for('static', filename='uploads/' + sticker) }}">
-            <div class="grow break-all text-sm">{{ sticker }}</div>
+            <img class="grow max-h-36 object-contain" src="{{ url_for('static', filename='uploads/' + sticker) }}">
+            <!--<div class="grow break-all text-sm">{{ sticker }}</div>-->
             <a class="btn btn-primary block w-100" href="{{ url_for('print', name=sticker) }}"><i class="fa fa-print" aria-hidden="true"></i> Imprimer</a>
         </div>
     {% endfor %}
@@ -25,7 +25,7 @@
               <label for="processing">Traitement :</label>
               <select name="processing" class="text-sm">
                 <option value="none">Aucun</option>
-                <option value="dithering+resize+cropping" selected>Dithering + Resize + Cropping</option>
+                <option value="dithering+resize" selected>Dithering + Contrast/Lum + Resize</option>
               </select>
           </div>
           <button class="btn btn-primary" type="submit"><i class="fa fa-download" aria-hidden="true"></i> Téléverser</button>
