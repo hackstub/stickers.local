@@ -4,11 +4,12 @@
     
     <div class="grid grid-cols-4 gap-4 pb-10">
     {% for sticker in stickers %}
-        <div class="relative flex flex-col text-center bg-gray-300">
-            <a class="absolute top-0 right-0 bg-red-500 text-white text-xs p-0 h-4 w-4" href="{{ url_for('delete', name=sticker) }}">x</a>
+        <div class="relative flex flex-col text-center bg-gray-300 rounded-md">
+            <a class="rounded-md absolute bottom-0 left-0 bg-blue-500 text-white pt-0.5 p-0 h-7 w-7" href="{{ url_for('print_sticker', name=sticker) }}"><i class="fa fa-print" aria-hidden="true"></i></a>
+            <a class="rounded-md absolute top-0 right-0 bg-red-400 text-white text-xs p-0 h-4 w-4" href="{{ url_for('delete', name=sticker) }}"><i class="fa fa-times" aria-hidden="true"></i></a>
             <img class="grow max-h-36 object-contain" src="{{ url_for('static', filename='uploads/' + sticker) }}">
             <!--<div class="grow break-all text-sm">{{ sticker }}</div>-->
-            <a class="btn btn-primary block w-100" href="{{ url_for('print', name=sticker) }}"><i class="fa fa-print" aria-hidden="true"></i> Imprimer</a>
+            <!--<a class="btn btn-primary block w-100" href="{{ url_for('print_sticker', name=sticker) }}"><i class="fa fa-print" aria-hidden="true"></i> Imprimer</a>-->
         </div>
     {% endfor %}
     </div>
@@ -19,15 +20,18 @@
         <h2 class="text-2xl">Ajouter un sticker</h2>
         <form action="/uploads" method="post" enctype="multipart/form-data">
           <input class="py-2" type="file" name="file">
+          <br/>
+          <!--
           <div class="py-2">
-              <span class="text-sm">Les images doivent être au format exact 991x306 pixels, PNG noirs et blanc.</span>
-              <br/>
               <label for="processing">Traitement :</label>
               <select name="processing" class="text-sm">
                 <option value="none">Aucun</option>
                 <option value="dithering+resize" selected>Dithering + Contrast/Lum + Resize</option>
               </select>
+              <br/>
+              <span class="text-xs">(Si pas de traitement choisi, l'image doit forcément avoir une largeur exacte de 696px)</span>
           </div>
+          -->
           <button class="btn btn-primary" type="submit"><i class="fa fa-download" aria-hidden="true"></i> Téléverser</button>
         </form>
         <div class="sm">

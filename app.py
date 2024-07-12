@@ -44,16 +44,14 @@ def upload_file():
         if os.path.exists(path):
             return "Il existe déjà un fichier avec ce nom"
         file.save(path)
-        processing = request.form["processing"]
-        os.system(f"bash scripts/convert.sh '{path}' '{processing}'")
         return redirect(url_for('home'))
 
 
 @app.route('/print/<name>')
-def print(name):
+def print_sticker(name):
     name = secure_filename(name)
     path = os.path.join(app.config['UPLOAD_FOLDER'], name)
-    os.system(f"bash scripts/print.sh '{path}'")
+    os.system(f"SIZE=big DITHERING=true bash scripts/print.sh '{path}'")
     return redirect(url_for('home'))
 
 
