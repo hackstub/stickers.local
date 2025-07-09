@@ -28,12 +28,12 @@ fi
 if [[ "$DITHERING" == "true" ]]
 then
     # From https://github.com/makew0rld/didder/releases
-        #--brightness 0.5 \
+        #--contrast 0.1 \
     target_before_dither="${target%.*}".before_dither.png
     mv "$target" "$target_before_dither"
     ./scripts/didder_1.3.0_linux_64-bit \
         --height 696 \
-        --contrast 0.1 \
+        --brightness 0.1 \
         --palette "black white" \
         --in "$target_before_dither" \
         --out "$target" \

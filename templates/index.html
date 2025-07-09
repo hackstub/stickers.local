@@ -1,15 +1,41 @@
 {% extends "base.html" %}
 {% block main %}
-    <h1 class="text-4xl text-center pb-10 font-bold">stickers.local</h1>
     
-    <div class="grid grid-cols-4 gap-4 pb-10">
+    <img alt="stickers.local" class="px-5 my-10 mx-auto max-h-40 object-contain" src="{{ url_for('static', filename='logo.png') }}">
+   
+    {% if not printer_is_online %}
+    <div class="text-center text-red-500 font-bold text-xl pb-5">
+        ⚠️ L'imprimante est hors ligne / inaccessible ⚠️
+    </div>
+    {% endif %}
+
+    <div class="grid grid-cols-3 sm:grid-cols-6 md:gap-2 px-5 sm:px-0 pb-10 mx-3 sm:mx-10 md:mx-20">
+    {% if not is_root_collection %}
+        <a class="relative flex flex-col text-center pt-4 pb-2" href="{{ url_for('home', collection=collection.rsplit('/', 1)[0] if '/' in collection else None) }}">
+            <img class="grow max-h-16 object-contain" src="{{ url_for('static', filename='folder4.png') }}">
+            <span>← <small>Retour</small></span>
+        </a>
+    {% endif %}
+    {% for collection in collections %}
+        <a class="relative flex flex-col text-center pt-4 pb-2" href="{{ url_for('home', collection=collection) }}">
+            <img class="grow w-100 max-h-16 object-contain" src="{{ url_for('static', filename='folder' + (1 + (loop.index0 % 4))|string + '.png') }}">
+            <div class="leading-5 pt-1">{{ collection.split('/')[-1].replace('_', ' ') }}</div>
+        </a>
+    {% endfor %}
+    </div>
+    
+    <div class="grid px-5 sm:px-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 sm:gap-2 pb-10">
     {% for sticker in stickers %}
-        <div class="relative flex flex-col text-center bg-gray-300 rounded-md">
-            <a class="rounded-md absolute bottom-0 left-0 bg-blue-500 text-white pt-0.5 p-0 h-7 w-7" href="{{ url_for('print_sticker', name=sticker) }}"><i class="fa fa-print" aria-hidden="true"></i></a>
-            <a class="rounded-md absolute top-0 right-0 bg-red-400 text-white text-xs p-0 h-4 w-4" href="{{ url_for('delete', name=sticker) }}"><i class="fa fa-times" aria-hidden="true"></i></a>
-            <img class="grow max-h-36 object-contain" src="{{ url_for('static', filename='uploads/' + sticker) }}">
-            <!--<div class="grow break-all text-sm">{{ sticker }}</div>-->
-            <!--<a class="btn btn-primary block w-100" href="{{ url_for('print_sticker', name=sticker) }}"><i class="fa fa-print" aria-hidden="true"></i> Imprimer</a>-->
+        <div class="relative flex flex-col text-center rounded-md">
+            <button class="rounded-md absolute bottom-0 left-0 bg-blue-500 text-white pt-0.5 p-0 h-7 w-7 print"
+                    data-sticker="{{ sticker }}">
+                <i class="fa fa-print" aria-hidden="true"></i>
+            </button>
+            <button class="rounded-md absolute top-0 right-0 text-red-400 text-xs p-0 h-4 w-4 delete"
+                    data-sticker="{{ sticker }}">
+                <i class="fa fa-times" aria-hidden="true"></i>
+            </button>
+            <img class="grow max-h-64 object-contain" src="{{ url_for('static', filename='uploads/' + sticker) }}">
         </div>
     {% endfor %}
     </div>
@@ -18,23 +44,45 @@
 
     <div class="text-center">
         <h2 class="text-2xl">Ajouter un sticker</h2>
-        <form action="/uploads" method="post" enctype="multipart/form-data">
+        <form action="{{ url_for('sticker_upload') }}" method="post" enctype="multipart/form-data">
+          <input hidden type="text" name="collection" value="{{ current_collection }}">
           <input class="py-2" type="file" name="file">
           <br/>
-          <!--
-          <div class="py-2">
-              <label for="processing">Traitement :</label>
-              <select name="processing" class="text-sm">
-                <option value="none">Aucun</option>
-                <option value="dithering+resize" selected>Dithering + Contrast/Lum + Resize</option>
-              </select>
-              <br/>
-              <span class="text-xs">(Si pas de traitement choisi, l'image doit forcément avoir une largeur exacte de 696px)</span>
-          </div>
-          -->
-          <button class="btn btn-primary" type="submit"><i class="fa fa-download" aria-hidden="true"></i> Téléverser</button>
+          <button class="btn" style="background-color: paleturquoise" type="submit"><i class="fa fa-download" aria-hidden="true"></i> Téléverser</button>
         </form>
         <div class="sm">
         </div>
     </div>
+
+
+<script>
+const printLinks = document.getElementsByClassName("print")
+for (let i = 0; i < printLinks.length; i++) {
+    printLinks[i].addEventListener("click", function(e) {
+        if (e.target.parentElement.tagName == "BUTTON") {
+            b = e.target.parentElement;
+        }
+        else {
+            b = e.target;
+        }
+        fetch("{{ url_for('sticker_print') }}" + `?sticker=${b.getAttribute("data-sticker")}`, { method: "POST" })
+    });
+}
+const deleteLinks = document.getElementsByClassName("delete")
+for (let i = 0; i < deleteLinks.length; i++) {
+    deleteLinks[i].addEventListener("click", function(e) {
+        if (e.target.parentElement.tagName == "BUTTON") {
+            b = e.target.parentElement;
+        }
+        else {
+            b = e.target;
+        }
+        fetch("{{ url_for('sticker_delete') }}" + `?sticker=${b.getAttribute("data-sticker")}`, { method: "DELETE" });
+        b.parentElement.remove();
+    });
+}
+</script>
+
+
+
 {% endblock %}

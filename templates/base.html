@@ -30,14 +30,14 @@
   </style>
   </head>
 
-  <body class="font-mono bg-neutral-50 text-gray-800">
+  <body class="font-mono text-gray-700 w-fit sm:w-full" style="background-color: #fdfce3;">
 
-      <main class="mx-auto max-w-screen-md pt-5">
+      <main class="mx-auto px-3 max-w-screen-md md:max-w-screen-lg pt-5">
         {% block main %}
         {% endblock %}
       </main>
 
-      <footer class="h-5 my-5 text-center">
+      <footer class="h-5 my-5 max-w-screen-md md:max-w-screen-lg text-center">
         <p>
            Made with <i class='text-red-500 fa fa-heart-o' aria-label='love'></i> using <a class='text-blue-800 dark:text-blue-400' href='https://flask.palletsprojects.com'>Flask</a> and <a class='text-blue-800 dark:text-blue-400' href='https://tailwindcss.com/'>TailwindCSS</a>
         </p>
