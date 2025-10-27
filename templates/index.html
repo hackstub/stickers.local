@@ -1,8 +1,21 @@
 {% extends "base.html" %}
 {% block main %}
     
-    <img alt="stickers.local" class="px-5 my-10 mx-auto max-h-40 object-contain" src="{{ url_for('static', filename='logo.png') }}">
-   
+    <img alt="stickers.local" class="px-5 mt-10 mb-2 mx-auto max-h-40 object-contain" src="{{ url_for('static', filename='logo.png') }}">
+  
+    <div class="px-2 mb-8 text-gray-700 text-center">
+        <label for="search" class="sr-only">Rechercher</label>
+        <input
+            type="text"
+            id="search"
+            placeholder="Rechercher"
+            spellcheck="false"
+            {% if request.args.get("q") %}value="{{ request.args.get("q") }}"{% endif %}
+            class="w-72 text-sm text-center"
+            style="background:none; outline: none !important; border: none !important; box-shadow: none !important;"
+        >
+    </div>
+
     {% if not printer_is_online %}
     <div class="text-center text-red-500 font-bold text-xl pb-5">
         ⚠️ L'imprimante est hors ligne / inaccessible ⚠️
@@ -11,7 +24,7 @@
 
     <div class="grid grid-cols-3 sm:grid-cols-6 md:gap-2 px-5 sm:px-0 pb-10 mx-3 sm:mx-10 md:mx-20">
     {% if not is_root_collection %}
-        <a class="relative flex flex-col text-center pt-4 pb-2" href="{{ url_for('home', collection=collection.rsplit('/', 1)[0] if '/' in collection else None) }}">
+        <a class="relative flex flex-col text-center pt-4 pb-2" href="{{ url_for('home', collection=collection.rsplit('/', 1)[0] if collection and '/' in collection else None) }}">
             <img class="grow max-h-16 object-contain" src="{{ url_for('static', filename='folder4.png') }}">
             <span>← <small>Retour</small></span>
         </a>
@@ -81,6 +94,15 @@ for (let i = 0; i < deleteLinks.length; i++) {
         b.parentElement.remove();
     });
 }
+
+document.getElementById("search").addEventListener("keyup", function(event) {
+    event.preventDefault();
+    if (event.keyCode === 13) {
+        location.replace("{{ url_for('search') }}" + "?q=" + document.getElementById("search").value)
+        document.getElementById("myButton").click();
+    }
+});
+
 </script>
 
 

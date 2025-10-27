@@ -3,6 +3,7 @@ from pathlib import Path
 from flask import Flask, flash, request, redirect, url_for, send_from_directory, render_template
 from werkzeug.utils import secure_filename
 
+PRINTER = "/dev/usb/lp0"
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 app = Flask(__name__, static_url_path="/assets", static_folder="assets")
@@ -35,15 +36,13 @@ def home(collection=None, subcol=None, subsubcol=None):
     stickers = [collection + "/" + str(s.name) for s in stickers]
     stickers = [s.strip("/") for s in stickers]
 
-    printer_is_online = os.path.exists("/dev/usb/lp0")
-
     return render_template(
         "index.html",
         current_collection=collection,
         collections=collections,
         stickers=stickers,
         is_root_collection=not bool(collection),
-        printer_is_online=printer_is_online
+        printer_is_online=os.path.exists(PRINTER)
     )
 
 
@@ -100,3 +99,25 @@ def sticker_delete():
     assert Path(path).exists()
     os.unlink(path)
     return redirect(url_for('home'))
+
+
+@app.route('/stickers/search')
+def search():
+
+    pattern = request.args.get('q')
+    assert pattern.lower().replace(" ", "").replace("_", "").isalnum(), ""
+
+    matches = [f for f in list(Path(app.config["UPLOAD_FOLDER"]).rglob("*")) if f.is_file() and pattern in str(f)]
+
+    stickers = sorted(matches, key=lambda f: f.stat().st_mtime, reverse=True)
+    stickers = [str(s).replace(app.config["UPLOAD_FOLDER"], "") for s in stickers]
+    stickers = [s.strip("/") for s in stickers]
+
+    return render_template(
+        "index.html",
+        current_collection="",
+        collections=[],
+        stickers=stickers,
+        is_root_collection=False,
+        printer_is_online=os.path.exists(PRINTER)
+    )
