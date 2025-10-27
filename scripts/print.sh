@@ -4,7 +4,7 @@ target="$1"
 
 tmpdir=$(mktemp -d)
 cp "$target" "$tmpdir"
-target="$tmpdir/$(basename $target)"
+target="$tmpdir/$(basename "$target")"
 
 target_png="${target%.*}".png
 if [[ "$target_png" != "$target" ]]
@@ -17,6 +17,8 @@ fi
 
 W="$(identify -format '%w' $target)"
 H="$(identify -format '%h' $target)"
+#DITHERING=false
+#SIZE=small # aleks was here
 if ([[ "$SIZE" == "big" ]] && [[ "$H" -gt "$W" ]]) || ([[ "$SIZE" == "small" ]] && [[ "$W" -gt "$H" ]])
 then
     target_before_rotation="${target%.*}".before_rotate.png
@@ -25,29 +27,26 @@ then
 fi
 
 
+target_before_process="${target%.*}".before_dither.png
+mv "$target" "$target_before_process"
 if [[ "$DITHERING" == "true" ]]
 then
     # From https://github.com/makew0rld/didder/releases
         #--contrast 0.1 \
-    target_before_dither="${target%.*}".before_dither.png
-    mv "$target" "$target_before_dither"
     ./scripts/didder_1.3.0_linux_64-bit \
         --height 696 \
         --brightness 0.1 \
         --palette "black white" \
-        --in "$target_before_dither" \
+        --in "$target_before_process" \
         --out "$target" \
         edm --serpentine FloydSteinberg
 else
-    target_before_resize="${target%.*}".before_resize.png
-    convert "$target_before_resize" \
-        -resize 696x \
-        "$target"
+    #convert "$target_before_process" -resize 696x "$target"
+    cp "$target_before_process" "$target"
 fi
 
 export BROTHER_QL_PRINTER=file:///dev/usb/lp0
 export BROTHER_QL_MODEL=QL-570
-#brother_ql print -r90 -l 29x90 "$1"
-brother_ql print -r90 -l 62 "$target"
+$(dirname $0)/../venv/bin/brother_ql print -r90 -l 62 "$target"
 
 rm -rf "$tmpdir"
