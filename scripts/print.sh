@@ -1,5 +1,6 @@
 set -eux
 
+echo starting script
 target="$1"
 
 tmpdir=$(mktemp -d)
@@ -17,7 +18,7 @@ fi
 
 W="$(identify -format '%w' $target)"
 H="$(identify -format '%h' $target)"
-#DITHERING=false
+DITHERING=true
 #SIZE=small # aleks was here
 if ([[ "$SIZE" == "big" ]] && [[ "$H" -gt "$W" ]]) || ([[ "$SIZE" == "small" ]] && [[ "$W" -gt "$H" ]])
 then
@@ -33,7 +34,7 @@ if [[ "$DITHERING" == "true" ]]
 then
     # From https://github.com/makew0rld/didder/releases
         #--contrast 0.1 \
-    ./scripts/didder_1.3.0_linux_64-bit \
+    ./scripts/didder_1.3.0_linux_arm64 \
         --height 696 \
         --brightness 0.1 \
         --palette "black white" \
@@ -45,8 +46,16 @@ else
     cp "$target_before_process" "$target"
 fi
 
-export BROTHER_QL_PRINTER=file:///dev/usb/lp0
-export BROTHER_QL_MODEL=QL-570
-$(dirname $0)/../venv/bin/brother_ql print -r90 -l 62 "$target"
+echo printing
 
-rm -rf "$tmpdir"
+export BROTHER_QL_PRINTER=file:///dev/usb/lp0
+export BROTHER_QL_MODEL=QL-720NW
+
+if [[ $W -le $H ]]
+then
+	$(dirname $0)/../venv/bin/brother_ql print -r90 -l 62 "$target"
+else
+	$(dirname $0)/../venv/bin/brother_ql print -l 62 "$target"
+fi
+
+#rm -rf "$tmpdir"
