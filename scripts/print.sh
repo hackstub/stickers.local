@@ -23,7 +23,7 @@ if ([[ "$SIZE" == "big" ]] && [[ "$H" -gt "$W" ]]) || ([[ "$SIZE" == "small" ]] 
 then
     target_before_rotation="${target%.*}".before_rotate.png
     mv "$target" "$target_before_rotation"
-    convert "$target_before_rotation" -rotate 90 "$target"
+    convert "$target_before_rotation" -rotate "$orientation" "$target"
 fi
 
 

@@ -35,6 +35,7 @@ def home(collection=None, subcol=None, subsubcol=None):
     stickers = sorted(stickers, key=lambda f: f.stat().st_mtime, reverse=True)
     stickers = [collection + "/" + str(s.name) for s in stickers]
     stickers = [s.strip("/") for s in stickers]
+    print(stickers)
 
     return render_template(
         "index.html",
@@ -80,7 +81,6 @@ def sticker_upload():
         file.save(path)
         return redirect(url_for('home', collection=collection or None))
 
-
 @app.route('/stickers/print', methods=['POST'])
 def sticker_print():
     name = request.args.get("sticker")
@@ -90,6 +90,34 @@ def sticker_print():
     os.system(f"SIZE=big DITHERING=true bash scripts/print.sh '{path}'")
     return redirect(url_for('home'))
 
+@app.route('/collection/<collection>/print_all', methods=['GET', 'POST'])
+def sticker_print_all(collection=None, subcol=None, subsubcol=None):
+    if not collection:
+        collection = ""
+        folder = Path(app.config["UPLOAD_FOLDER"])
+    else:
+        if subcol:
+            collection += "/" + subcol
+        if subsubcol:
+            collection += "/" + subsubcol
+        assert ".." not in collection and "'" not in collection and ";" not in collection
+        folder = Path(app.config["UPLOAD_FOLDER"]) / collection
+
+    collections = sorted([collection + "/" + str(s.name) for s in folder.iterdir() if s.is_dir()])
+    collections = [c.strip("/") for c in collections]
+
+    stickers = [s for s in folder.iterdir() if s.is_file()]
+    stickers = sorted(stickers, key=lambda f: f.stat().st_mtime, reverse=True)
+    stickers = [collection + "/" + str(s.name) for s in stickers]
+
+    for name in stickers:
+        assert name and ".." not in name and "'" not in name and ";" not in name
+        path = app.config['UPLOAD_FOLDER'] + '/' + name
+        print(path)
+        assert Path(path).exists()
+        os.system(f"SIZE=big DITHERING=true bash scripts/print.sh '{path}'")
+
+    return redirect(url_for('home'))
 
 @app.route('/stickers/delete', methods=['DELETE'])
 def sticker_delete():
