@@ -90,7 +90,7 @@ def sticker_print():
     os.system(f"SIZE=big DITHERING=true bash scripts/print.sh '{path}'")
     return redirect(url_for('home'))
 
-@app.route('/collection/<collection>/print_all', methods=['GET', 'POST'])
+@app.route('/stickers/<collection>/<subcol>/<subsubcol>/print_all', methods=['GET', 'POST'])
 def sticker_print_all(collection=None, subcol=None, subsubcol=None):
     if not collection:
         collection = ""
