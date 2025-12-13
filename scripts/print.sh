@@ -39,7 +39,17 @@ if [[ "$DITHERING" == "true" ]]
 then
     # From https://github.com/makew0rld/didder/releases
         #--contrast 0.1 \
-    ./scripts/didder_1.3.0_linux_64-bit \
+    if [[ $(uname -m) == "x86_64" ]]
+    then
+        didder_suffix="64-bit"
+    elif [[ $(uname -m) == "aarch64" ]]
+    then
+        didder_suffix="arm64"
+    else
+       echo "Uhoh, c'est quoi $(uname -m) comme archi?!"
+       exit 1
+    fi
+    ./scripts/didder_1.3.0_linux_${didder_suffix} \
         --height 696 \
         --brightness 0.1 \
         --palette "black white" \
