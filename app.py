@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from flask import Flask, flash, request, redirect, url_for, send_from_directory, render_template
+from flask import Flask, flash, request, redirect, url_for, send_from_directory, render_template, jsonify
 from werkzeug.utils import secure_filename
 
 PRINTER = "/dev/usb/lp0"
@@ -80,15 +80,29 @@ def sticker_upload():
             return "Il existe déjà un fichier avec ce nom"
         file.save(path)
         return redirect(url_for('home', collection=collection or None))
+    else:
+        return "Ohno, le fichier n'est pas ok!"
+
 
 @app.route('/stickers/print', methods=['POST'])
 def sticker_print():
+
     name = request.args.get("sticker")
+    quantity = request.args.get("quantity", 1)
+    quantity = int(quantity)
+    size = request.args.get("size", "default")
+    dithering = request.args.get("dithering", "true")
+
+    assert quantity > 0 and quantity < 500
+    assert size in ["default", "large", "small"]
+    assert dithering in ["true", "false"]
+
     assert name and ".." not in name and "'" not in name and ";" not in name
     path = app.config['UPLOAD_FOLDER'] + "/" + name
     assert Path(path).exists()
-    os.system(f"SIZE=big DITHERING=true bash scripts/print.sh '{path}'")
-    return redirect(url_for('home'))
+    ret = os.system(f"SIZE={size} DITHERING={dithering} QUANTITY={quantity} bash scripts/print.sh '{path}'")
+    return jsonify(success=ret == 0)
+
 
 @app.route('/collection/<collection>/print_all', methods=['GET', 'POST'])
 def sticker_print_all(collection=None, subcol=None, subsubcol=None):
@@ -110,14 +124,17 @@ def sticker_print_all(collection=None, subcol=None, subsubcol=None):
     stickers = sorted(stickers, key=lambda f: f.stat().st_mtime, reverse=True)
     stickers = [collection + "/" + str(s.name) for s in stickers]
 
+    any_failed = False
     for name in stickers:
         assert name and ".." not in name and "'" not in name and ";" not in name
         path = app.config['UPLOAD_FOLDER'] + '/' + name
-        print(path)
         assert Path(path).exists()
-        os.system(f"SIZE=big DITHERING=true bash scripts/print.sh '{path}'")
+        ret = os.system(f"bash scripts/print.sh '{path}'")
+        if ret != 0:
+            any_failed = True
 
-    return redirect(url_for('home'))
+    return jsonify(success=any_failed is False)
+
 
 @app.route('/stickers/delete', methods=['DELETE'])
 def sticker_delete():

@@ -67,6 +67,58 @@
         </div>
     </div>
 
+    <div
+      id="toast"
+      class="hidden fixed inset-0 z-[999] grid h-screen w-screen place-items-center bg-black bg-opacity-10 transition-opacity duration-300"
+    >
+      <div
+        class="relative m-4 p-4 w-96 rounded-xl shadow-sm text-center text-red-500 font-bold"
+        style="background-color: #fdfce3;"
+      >
+        <img class="mx-auto" src="{{ url_for('static', filename='ohno.png') }}" />
+        <span id="toast-error"></span>
+      </div>
+    </div>
+
+    <div
+      id="modal"
+      class="hidden fixed inset-0 z-[999] grid h-screen w-screen place-items-center bg-black bg-opacity-30 backdrop-blur-sm transition transition-opacity duration-300"
+    >
+      <div
+        class="relative m-4 p-4 w-72 rounded-xl shadow-sm text-center text-gray-800"
+        style="background-color: #fdfce3;"
+      >
+        <div class="pb-3 flex">
+          <span class="flex-grow font-bold text-xl">Impression avancée</span>
+        </div>
+        <div>
+            <div class="pb-3">
+                <span id="modal-sticker-name" class="text-sm text-grey-500"></span>
+            </div>
+            <div class="pb-3">
+                <label for="print_type">Taille</label>
+                <select id="modal-print-size" name="print_type">
+                    <option value="small">Petit</option>
+                    <option value="large">Grand</option>
+                </select>
+            </div>
+            <div class="pb-3">
+                <label for="quantity">Quantité</label>
+                <input id="modal-print-quantity" type="number" name="quantity" min="1" max="1000" value="1" class="border-0 rounded-md" />
+            </div>
+            <div>
+              <button id="modal-print"
+                      class="rounded-md bg-blue-500 py-2 px-4 border border-transparent text-center text-sm text-white shadow-md ml-2"
+                      >
+                <i class="fa fa-print" aria-hidden="true"></i> Go
+              </button>
+            </div>
+            <div id="modal-error" class="text-red-500 pt-4 font-bold">
+            </div>
+        </div>
+      </div>
+    </div>
+
 
 <script>
 const printLinks = document.getElementsByClassName("print")
@@ -78,9 +130,45 @@ for (let i = 0; i < printLinks.length; i++) {
         else {
             b = e.target;
         }
-        fetch("{{ url_for('sticker_print') }}" + `?sticker=${b.getAttribute("data-sticker")}`, { method: "POST" })
+        var sticker = b.getAttribute("data-sticker");
+        if (e.ctrlKey) {
+            document.getElementById("modal").classList.toggle("hidden");
+            document.getElementById("modal-error").textContent = "";
+            document.getElementById('modal').dataset.sticker = sticker;
+            document.getElementById('modal-sticker-name').textContent = sticker;
+        }
+        else {
+            fetch("{{ url_for('sticker_print') }}" + `?sticker=${sticker}`, { method: "POST" })
+            .then((response) => response.json())
+            .then(data => {
+                if (! data.success) {
+                    document.getElementById("toast").classList.remove("hidden");
+                    document.getElementById("toast-error").textContent = "Ohno, une impression a échoué! Il faut regarder les logs!";
+                    setTimeout(() => {
+                      document.getElementById("toast").classList.add("hidden");
+                    }, 2000);
+                }
+            });
+        }
     });
 }
+document.getElementById("modal-print").addEventListener("click", function(event) {
+    event.preventDefault();
+    document.getElementById("modal-error").textContent = "";
+    var sticker = document.getElementById("modal").getAttribute("data-sticker");
+    var size = document.getElementById("modal-print-size").value;
+    var quantity = document.getElementById("modal-print-quantity").value;
+    fetch("{{ url_for('sticker_print') }}" + `?quantity=${quantity}&size=${size}&sticker=${sticker}`, { method: "POST" })
+    .then((response) => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById("modal").classList.add("hidden");
+        }
+        else {
+            document.getElementById("modal-error").textContent = "Ohno, l'impression a échoué! Il faut regarder les logs!";
+        }
+    });
+})
 const deleteLinks = document.getElementsByClassName("delete")
 for (let i = 0; i < deleteLinks.length; i++) {
     deleteLinks[i].addEventListener("click", function(e) {
@@ -99,9 +187,21 @@ document.getElementById("search").addEventListener("keyup", function(event) {
     event.preventDefault();
     if (event.keyCode === 13) {
         location.replace("{{ url_for('search') }}" + "?q=" + document.getElementById("search").value)
-        document.getElementById("myButton").click();
     }
 });
+
+document.onkeydown = function(evt) {
+    evt = evt || window.event;
+    var isEscape = false;
+    if ("key" in evt) {
+        isEscape = (evt.key === "Escape" || evt.key === "Esc");
+    } else {
+        isEscape = (evt.keyCode === 27);
+    }
+    if (isEscape) {
+        document.getElementById("modal").classList.add("hidden");
+    }
+};
 
 </script>
 
