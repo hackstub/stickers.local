@@ -90,6 +90,14 @@ def sticker_print():
     os.system(f"SIZE=big DITHERING=true bash scripts/print.sh '{path}'")
     return redirect(url_for('home'))
 
+@app.route('/collection/<collection>/print-all', methods=['GET'])
+def sticker_print_all(collection=None):
+    folder = Path(app.config["UPLOAD_FOLDER"]) / collection
+    for f in os.listdir(folder):
+	    assert Path(folder).exists()
+	    sticker = folder / f
+	    os.system(f"SIZE=big DITHERING=true bash scripts/print.sh '{sticker}'")
+    return redirect(url_for('home'))
 
 @app.route('/stickers/delete', methods=['DELETE'])
 def sticker_delete():

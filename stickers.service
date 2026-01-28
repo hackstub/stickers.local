@@ -1,0 +1,9 @@
+[Unit]
+Description=Interface d'impression de stickers.
+
+[Service]
+Type=simple
+ExecStart=/bin/bash /usr/bin/stickers.sh
+
+[Install]
+WantedBy=multi-user.target

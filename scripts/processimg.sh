@@ -3,16 +3,16 @@ set -eux
 echo starting script
 target="$1"
 
-tmpdir=$(mktemp -d)
-cp "$target" "$tmpdir"
-target="$tmpdir/$(basename "$target")"
+target="postprocessimg/$(basename "$target")"
 
 target_png="${target%.*}".png
 if [[ "$target_png" != "$target" ]]
 then
-    convert "$target" "$target_png"
-    rm "$target"
+    convert "$1" "$target_png"
+    rm $target
     target="$target_png"
+else
+    cp $1 $target
 fi
 
 
@@ -34,7 +34,7 @@ if [[ "$DITHERING" == "true" ]]
 then
     # From https://github.com/makew0rld/didder/releases
         #--contrast 0.1 \
-    ./scripts/didder_1.3.0_linux_arm64 \
+    ./didder_1.3.0_linux_arm64 \
         --height 696 \
         --brightness 0.1 \
         --palette "black white" \
@@ -43,20 +43,6 @@ then
         edm --serpentine FloydSteinberg
 else
     #convert "$target_before_process" -resize 696x "$target"
-    cp "$target_before_process" "$target"
-fi
-
-echo printing
-
-export BROTHER_QL_PRINTER=file:///dev/usb/lp0
- #export BROTHER_QL_MODEL=QL-720NW
-export BROTHER_QL_MODEL=QL-570
-
-if [[ $W -le $H ]]
-then
-	$(dirname $0)/../venv/bin/brother_ql print -r90 -l 62 "$target"
-else
-	$(dirname $0)/../venv/bin/brother_ql print -l 62 "$target"
-fi
-
-#rm -rf "$tmpdir"
+		    cp "$target_before_process" "$target"
+		fi
+		rm -f $target_before_process
