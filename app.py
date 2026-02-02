@@ -78,8 +78,11 @@ def sticker_upload():
         if os.path.exists(path):
             return "Il existe déjà un fichier avec ce nom"
         file.save(path)
-        return redirect(url_for('home', collection=collection or None))
 
+        ## [wip] Traiter le fichier
+        os.system(f"bash scripts/processimg.sh '{path}'")
+
+        return redirect(url_for('home', collection=collection or None))
 
 @app.route('/stickers/print', methods=['POST'])
 def sticker_print():

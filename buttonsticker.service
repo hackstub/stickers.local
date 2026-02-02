@@ -1,0 +1,10 @@
+[Unit]
+Description=Impression de stickers avec bouton(pin27)
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/bin/bash /usr/bin/buttonsticker.sh
+
+[Install]
+WantedBy=multi-user.target

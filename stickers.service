@@ -3,6 +3,7 @@ Description=Interface d'impression de stickers.
 
 [Service]
 Type=simple
+#Restart=always
 ExecStart=/bin/bash /usr/bin/stickers.sh
 
 [Install]
