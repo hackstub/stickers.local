@@ -3,4 +3,5 @@ assets/fork*
 venv
 __pycache__
 *.save*
-
+scripts/didder*
+*gitignore
