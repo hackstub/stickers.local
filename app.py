@@ -90,7 +90,9 @@ def sticker_print():
     assert name and ".." not in name and "'" not in name and ";" not in name
     path = app.config['UPLOAD_FOLDER'] + "/" + name
     assert Path(path).exists()
-    os.system(f"SIZE=big DITHERING=true bash scripts/print.sh '{path}'")
+    print(f"'{path}'")
+    #os.system(f"SIZE=big DITHERING=true bash scripts/print.sh '{path}'")
+    os.system('scripts/print_direct.sh "' + path + '"')
     return redirect(url_for('home'))
 
 @app.route('/collection/<collection>/print-all', methods=['GET'])
