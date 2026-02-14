@@ -1,0 +1,9 @@
+[Unit]
+Description=Sticker printer interface.
+
+[Service]
+Type=simple
+ExecStart=/bin/bash //stickers.sh
+
+[Install]
+WantedBy=multi-user.target
