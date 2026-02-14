@@ -92,6 +92,8 @@ def sticker_print():
     assert Path(path).exists()
     print(f"'{path}'")
     #os.system(f"SIZE=big DITHERING=true bash scripts/print.sh '{path}'")
+    print(os.system("qr --error-correction=L https://badtrans.micro-ondes.org/stickers/" + path))
+    print("https://badtrans.micro-ondes.org/stickers/" + path)
     os.system('scripts/print_direct.sh "' + path + '"')
     return redirect(url_for('home'))
 

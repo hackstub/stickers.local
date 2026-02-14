@@ -8,8 +8,8 @@ from time import sleep
 import MotionSensor
 
 #os.environ['BROTHER_QL_PRINTER'] = 'file:///dev/usb/lp0'
-#os.environ['BROTHER_QL_MODEL'] = 'QL-720NW'
-os.environ['BROTHER_QL_MODEL'] = 'QL-570'
+os.environ['BROTHER_QL_MODEL'] = 'QL-720NW'
+#os.environ['BROTHER_QL_MODEL'] = 'QL-570'
 
 #button = Button(27)
 
@@ -48,5 +48,6 @@ sleep(2)
 else:
     print ('pas de mouvement')
     time.sleep(2)
+
 
 

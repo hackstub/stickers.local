@@ -5,7 +5,7 @@ from gpiozero import Button
 from time import sleep
 
 os.environ['BROTHER_QL_PRINTER'] = 'file:///dev/usb/lp0'
-#os.environ['BROTHER_QL_MODEL'] = 'QL-720NW'
+os.environ['BROTHER_QL_MODEL'] = 'QL-720NW'
 os.environ['BROTHER_QL_MODEL'] = 'QL-570'
 
 button = Button(27)
@@ -19,15 +19,13 @@ os.system("pwd")
 while True:
    if button.is_pressed:
      print('appuye')
-     for collection in os.listdir(imagesdir+"/postprocessimg"):
+     for collection in sorted(os.listdir(imagesdir+"/postprocessimg")):
          print(collection)
          file = random.choice(os.listdir(imagesdir+"/postprocessimg/"+collection))
          print(file)
-         #os.system(f'{rootdir}/venv/bin/brother_ql print -r90 -l 62 "{imagesdir}/postprocessimg/{collection}/{file}"')
-         url="http://localhost:5000/stickers/print?sticker="+collection+"/"+file
-         print(url)
-         query = requests.post(url)
-         print(query.status_code)
+         os.system("echo 'printing " + file + "'")
+         os.system(rootdir + '/venv/bin/brother_ql print -l 62 '+ imagesdir + '/postprocessimg/' + collection + '/' + file)
+         os.system("qrterminal " + file)
    else:
      #print('relache')
      sleep(0.05)

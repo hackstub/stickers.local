@@ -5,7 +5,7 @@ target="$1"
 imagesdir="/home/pi/stickers.local/assets/uploads"
 
 # on enregistre l'emplacement de destination en gardant le nom de la collection et le nom du fichier
-target="$imagesdir"/postprocessimg/$(echo $1 | rev | cut -d / -f 1-2 | rev )""
+target="$imagesdir/postprocessimg/$(echo $1 | rev | cut -d / -f 1-2 | rev )"
 echo $target
 #target="postprocessimg/$(basename "$target")"
 
@@ -13,7 +13,7 @@ echo $target
 target_png="${target%.*}".png
 
 # si le fichier original n'est pas déjà un png
-if [[ "$target_png" != "$target" ]]
+if [[ $target_png != $target ]]
 then
 	# alors on le convertit
     convert "$1" "$target_png"
@@ -23,7 +23,7 @@ then
     target="$target_png"
 else
 	# sinon, on copie simplement le fichier dans le dossier final
-    cp $1 $target
+    cp $1 $target"_processed.png"
 fi
 
 
@@ -53,7 +53,7 @@ then
         --palette "black white" \
         --in "$target_before_process" \
         --out "$target" \
-        edm --serpentine FloydSteinberg
+        edm --serpentine Stucki
 else
     #convert "$target_before_process" -resize 696x "$target"
 		cp "$target_before_process" "$target"

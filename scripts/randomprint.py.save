@@ -5,7 +5,7 @@ from gpiozero import Button
 from time import sleep
 
 #os.environ['BROTHER_QL_PRINTER'] = 'file:///dev/usb/lp0'
-#os.environ['BROTHER_QL_MODEL'] = 'QL-720NW'
+os.environ['BROTHER_QL_MODEL'] = 'QL-720NW'
 
 button = Button(27)
 

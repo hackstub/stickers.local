@@ -49,14 +49,15 @@ fi
 echo printing
 
 export BROTHER_QL_PRINTER=file:///dev/usb/lp0
- #export BROTHER_QL_MODEL=QL-720NW
+export BROTHER_QL_MODEL=QL-720NW
 export BROTHER_QL_MODEL=QL-570
+export LABEL_WIDTH=62
 
 if [[ $W -le $H ]]
 then
-	$(dirname $0)/../venv/bin/brother_ql print -r90 -l 62 "$target"
+	$(dirname $0)/../venv/bin/brother_ql print -r90 -l $LABEL_WIDTH "$target"
 else
-	$(dirname $0)/../venv/bin/brother_ql print -l 62 "$target"
+	$(dirname $0)/../venv/bin/brother_ql print -l $LABEL_WIDTH "$target"
 fi
 
 #rm -rf "$tmpdir"
