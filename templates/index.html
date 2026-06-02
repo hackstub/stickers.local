@@ -1,95 +1,76 @@
 {% extends "base.html" %}
 {% block main %}
-    
-    <img alt="stickers.local" class="px-5 mt-10 mb-2 mx-auto max-h-40 object-contain" src="{{ url_for('static', filename='logo.png') }}">
-  
-    <div class="px-2 mb-8 text-gray-700 text-center">
-        <label for="search" class="sr-only">Rechercher</label>
-        <input
-            type="text"
-            id="search"
-            placeholder="Rechercher"
-            spellcheck="false"
-            {% if request.args.get("q") %}value="{{ request.args.get("q") }}"{% endif %}
-            class="w-72 text-sm text-center"
-            style="background:none; outline: none !important; border: none !important; box-shadow: none !important;"
-        >
-    </div>
 
-    {% if not printer_is_online %}
-    <div class="text-center text-red-500 font-bold text-xl pb-5">
-        ⚠️ L'imprimante est hors ligne / inaccessible ⚠️
-    </div>
-    {% endif %}
+<img alt="stickers.local" class="px-5 mt-10 mb-2 mx-auto max-h-40 object-contain"
+    src="{{ url_for('static', filename='logo.png') }}">
 
-    <div class="grid grid-cols-3 sm:grid-cols-6 md:gap-2 px-5 sm:px-0 pb-10 mx-3 sm:mx-10 md:mx-20">
+<div class="px-2 mb-8 text-gray-700 text-center">
+    <label for="search" class="sr-only">Rechercher</label>
+    <input type="text" id="search" placeholder="Rechercher" spellcheck="false" {% if request.args.get("q")
+        %}value="{{ request.args.get(" q") }}"{% endif %} class="w-72 text-sm text-center"
+        style="background:none; outline: none !important; border: none !important; box-shadow: none !important;">
+</div>
+
+{% if not printer_is_online %}
+<div class="text-center text-red-500 font-bold text-xl pb-5">
+    ⚠️ L'imprimante est hors ligne / inaccessible ⚠️
+</div>
+{% endif %}
+
+<div class="grid grid-cols-3 sm:grid-cols-6 md:gap-2 px-5 sm:px-0 pb-10 mx-3 sm:mx-10 md:mx-20">
     {% if not is_root_collection %}
-        <a class="relative flex flex-col text-center pt-4 pb-2" href="{{ url_for('home', collection=collection.rsplit('/', 1)[0] if collection and '/' in collection else None) }}">
-            <img class="grow max-h-16 object-contain" src="{{ url_for('static', filename='folder4.png') }}">
-            <span>← <small>Retour</small></span>
-        </a>
+    <a class="relative flex flex-col text-center pt-4 pb-2"
+        href="{{ url_for('home', collection=collection.rsplit('/', 1)[0] if collection and '/' in collection else None) }}">
+        <img class="grow max-h-16 object-contain" src="{{ url_for('static', filename='folder4.png') }}">
+        <span>← <small>Retour</small></span>
+    </a>
     {% endif %}
     {% for collection in collections %}
-        <a class="relative flex flex-col text-center pt-4 pb-2" href="{{ url_for('home', collection=collection) }}">
-            <img class="grow w-100 max-h-16 object-contain" src="{{ url_for('static', filename='folder' + (1 + (loop.index0 % 4))|string + '.png') }}">
-            <div class="leading-5 pt-1">{{ collection.split('/')[-1].replace('_', ' ') }}</div>
-        </a>
+    <a class="relative flex flex-col text-center pt-4 pb-2" href="{{ url_for('home', collection=collection) }}">
+        <img class="grow w-100 max-h-16 object-contain"
+            src="{{ url_for('static', filename='folder' + (1 + (loop.index0 % 4))|string + '.png') }}">
+        <div class="leading-5 pt-1">{{ collection.split('/')[-1].replace('_', ' ') }}</div>
+    </a>
     {% endfor %}
-    </div>
-    
-    <div class="grid px-5 sm:px-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 sm:gap-2 pb-10">
+</div>
+
+<div class="grid px-5 sm:px-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 sm:gap-2 pb-10">
     {% for sticker in stickers %}
-        <div class="relative flex flex-col text-center rounded-md">
-            <button class="rounded-md absolute bottom-0 left-0 bg-blue-500 text-white pt-0.5 p-0 h-7 w-7 print"
-                    data-sticker="{{ sticker }}">
-                <i class="fa fa-print" aria-hidden="true"></i>
-            </button>
-            <button class="rounded-md absolute top-0 right-0 text-red-400 text-xs p-0 h-4 w-4 delete"
-                    data-sticker="{{ sticker }}">
-                <i class="fa fa-times" aria-hidden="true"></i>
-            </button>
-            <img class="grow max-h-64 object-contain" src="{{ url_for('static', filename='uploads/' + sticker) }}">
-        </div>
+    <sticker-image sticker="{{ sticker.relative }}" hash="{{ sticker.blurhash }}"
+        src="{{ url_for('static', filename='uploads/' + sticker.relative) }}" width="{{ sticker.width }}" height="{{ sticker.height }}"></sticker-image>
     {% endfor %}
-    </div>
-        
-    <hr class="pb-10"/>
+</div>
 
-    <div class="text-center">
-        <h2 class="text-2xl">Ajouter un sticker</h2>
-        <form action="{{ url_for('sticker_upload') }}" method="post" enctype="multipart/form-data">
-          <input hidden type="text" name="collection" value="{{ current_collection }}">
-          <input class="py-2" type="file" name="file">
-          <br/>
-          <button class="btn" style="background-color: paleturquoise" type="submit"><i class="fa fa-download" aria-hidden="true"></i> Téléverser</button>
-        </form>
-        <div class="sm">
-        </div>
-    </div>
+<hr class="pb-10" />
 
-    <div
-      id="toast"
-      class="hidden fixed inset-0 z-[999] grid h-screen w-screen place-items-center bg-black bg-opacity-10 transition-opacity duration-300"
-    >
-      <div
-        class="relative m-4 p-4 w-96 rounded-xl shadow-sm text-center text-red-500 font-bold"
-        style="background-color: #fdfce3;"
-      >
+<div class="text-center">
+    <h2 class="text-2xl">Ajouter un sticker</h2>
+    <form action="{{ url_for('sticker_upload') }}" method="post" enctype="multipart/form-data">
+        <input hidden type="text" name="collection" value="{{ current_collection }}">
+        <input class="py-2" type="file" name="file">
+        <br />
+        <button class="btn" style="background-color: paleturquoise" type="submit"><i class="fa fa-download"
+                aria-hidden="true"></i> Téléverser</button>
+    </form>
+    <div class="sm">
+    </div>
+</div>
+
+<div id="toast"
+    class="hidden fixed inset-0 z-[999] grid h-screen w-screen place-items-center bg-black bg-opacity-10 transition-opacity duration-300">
+    <div class="relative m-4 p-4 w-96 rounded-xl shadow-sm text-center text-red-500 font-bold"
+        style="background-color: #fdfce3;">
         <img class="mx-auto" src="{{ url_for('static', filename='ohno.png') }}" />
         <span id="toast-error"></span>
-      </div>
     </div>
+</div>
 
-    <div
-      id="modal"
-      class="hidden fixed inset-0 z-[999] grid h-screen w-screen place-items-center bg-black bg-opacity-30 backdrop-blur-sm transition transition-opacity duration-300"
-    >
-      <div
-        class="relative m-4 p-4 w-72 rounded-xl shadow-sm text-center text-gray-800"
-        style="background-color: #fdfce3;"
-      >
+<div id="modal"
+    class="hidden fixed inset-0 z-[999] grid h-screen w-screen place-items-center bg-black bg-opacity-30 backdrop-blur-sm transition transition-opacity duration-300">
+    <div class="relative m-4 p-4 w-72 rounded-xl shadow-sm text-center text-gray-800"
+        style="background-color: #fdfce3;">
         <div class="pb-3 flex">
-          <span class="flex-grow font-bold text-xl">Impression avancée</span>
+            <span class="flex-grow font-bold text-xl">Impression avancée</span>
         </div>
         <div>
             <div class="pb-3">
@@ -104,107 +85,19 @@
             </div>
             <div class="pb-3">
                 <label for="quantity">Quantité</label>
-                <input id="modal-print-quantity" type="number" name="quantity" min="1" max="1000" value="1" class="border-0 rounded-md" />
+                <input id="modal-print-quantity" type="number" name="quantity" min="1" max="1000" value="1"
+                    class="border-0 rounded-md" />
             </div>
             <div>
-              <button id="modal-print"
-                      class="rounded-md bg-blue-500 py-2 px-4 border border-transparent text-center text-sm text-white shadow-md ml-2"
-                      >
-                <i class="fa fa-print" aria-hidden="true"></i> Go
-              </button>
+                <button id="modal-print"
+                    class="rounded-md bg-blue-500 py-2 px-4 border border-transparent text-center text-sm text-white shadow-md ml-2">
+                    <i class="fa fa-print" aria-hidden="true"></i> Go
+                </button>
             </div>
             <div id="modal-error" class="text-red-500 pt-4 font-bold">
             </div>
         </div>
-      </div>
     </div>
-
-
-<script>
-const printLinks = document.getElementsByClassName("print")
-for (let i = 0; i < printLinks.length; i++) {
-    printLinks[i].addEventListener("click", function(e) {
-        if (e.target.parentElement.tagName == "BUTTON") {
-            b = e.target.parentElement;
-        }
-        else {
-            b = e.target;
-        }
-        var sticker = b.getAttribute("data-sticker");
-        if (e.ctrlKey) {
-            document.getElementById("modal").classList.toggle("hidden");
-            document.getElementById("modal-error").textContent = "";
-            document.getElementById('modal').dataset.sticker = sticker;
-            document.getElementById('modal-sticker-name').textContent = sticker;
-        }
-        else {
-            fetch("{{ url_for('sticker_print') }}" + `?sticker=${sticker}`, { method: "POST" })
-            .then((response) => response.json())
-            .then(data => {
-                if (! data.success) {
-                    document.getElementById("toast").classList.remove("hidden");
-                    document.getElementById("toast-error").textContent = "Ohno, une impression a échoué! Il faut regarder les logs!";
-                    setTimeout(() => {
-                      document.getElementById("toast").classList.add("hidden");
-                    }, 2000);
-                }
-            });
-        }
-    });
-}
-document.getElementById("modal-print").addEventListener("click", function(event) {
-    event.preventDefault();
-    document.getElementById("modal-error").textContent = "";
-    var sticker = document.getElementById("modal").getAttribute("data-sticker");
-    var size = document.getElementById("modal-print-size").value;
-    var quantity = document.getElementById("modal-print-quantity").value;
-    fetch("{{ url_for('sticker_print') }}" + `?quantity=${quantity}&size=${size}&sticker=${sticker}`, { method: "POST" })
-    .then((response) => response.json())
-    .then(data => {
-        if (data.success) {
-            document.getElementById("modal").classList.add("hidden");
-        }
-        else {
-            document.getElementById("modal-error").textContent = "Ohno, l'impression a échoué! Il faut regarder les logs!";
-        }
-    });
-})
-const deleteLinks = document.getElementsByClassName("delete")
-for (let i = 0; i < deleteLinks.length; i++) {
-    deleteLinks[i].addEventListener("click", function(e) {
-        if (e.target.parentElement.tagName == "BUTTON") {
-            b = e.target.parentElement;
-        }
-        else {
-            b = e.target;
-        }
-        fetch("{{ url_for('sticker_delete') }}" + `?sticker=${b.getAttribute("data-sticker")}`, { method: "DELETE" });
-        b.parentElement.remove();
-    });
-}
-
-document.getElementById("search").addEventListener("keyup", function(event) {
-    event.preventDefault();
-    if (event.keyCode === 13) {
-        location.replace("{{ url_for('search') }}" + "?q=" + document.getElementById("search").value)
-    }
-});
-
-document.onkeydown = function(evt) {
-    evt = evt || window.event;
-    var isEscape = false;
-    if ("key" in evt) {
-        isEscape = (evt.key === "Escape" || evt.key === "Esc");
-    } else {
-        isEscape = (evt.keyCode === 27);
-    }
-    if (isEscape) {
-        document.getElementById("modal").classList.add("hidden");
-    }
-};
-
-</script>
-
-
+</div>
 
 {% endblock %}

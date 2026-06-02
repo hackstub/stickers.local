@@ -1,0 +1,25 @@
+{
+  "name": "stickers.local",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "esbuild js/app.js --bundle --format=esm --loader:.html=text --outfile=assets/app.bundle.js --minify && tailwindcss -i css/main.css -o ./assets/main.css --minify",
+    "watch": "concurrently --kill-others 'esbuild js/app.js --bundle --format=esm --loader:.html=text --outfile=assets/app.bundle.js --watch' 'tailwindcss -i css/main.css -o ./assets/main.css --watch' 'FLASK_APP=app.py FLASK_ENV=development flask --debug run'",
+    "copy-assets": "cp node_modules/fork-awesome/css/fork-awesome.min.css assets/ && sed -i 's@../fonts/@@g' assets/fork-awesome.min.css && cp node_modules/fork-awesome/fonts/forkawesome-webfont.woff2 node_modules/fork-awesome/fonts/forkawesome-webfont.woff node_modules/fork-awesome/fonts/forkawesome-webfont.ttf assets/"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.28.1",
+  "dependencies": {
+    "blurhash": "^2.0.5",
+    "fork-awesome": "^1.2.0",
+    "tailwindcss": "^4.3.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/forms": "^0.5.11",
+    "concurrently": "^10.0.3",
+    "esbuild": "^0.28.0"
+  }
+}
