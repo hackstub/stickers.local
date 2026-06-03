@@ -1,7 +1,10 @@
 assets/uploads
 assets/fork*
+assets/*.bundle.js
+assets/main.css
 venv
 __pycache__
 *.save*
 scripts/didder*
 *gitignore
+node_modules
