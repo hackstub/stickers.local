@@ -1,9 +1,16 @@
 [Unit]
-Description=Sticker printer interface.
+Description=Stickers gunicorn daemon
+After=network.target
 
 [Service]
-Type=simple
-ExecStart=/bin/bash //stickers.sh
+PIDFile=/run/gunicorn/stickers-pid
+User=stickers
+Group=stickers
+WorkingDirectory=/var/www/stickers.local/
+ExecStart=/var/www/stickers.local/venv/bin/gunicorn -c /var/www/stickers.local/gunicorn.py wsgi:app
+ExecReload=/bin/kill -s HUP $MAINPID
+ExecStop=/bin/kill -s TERM $MAINPID
+PrivateTmp=true
 
 [Install]
 WantedBy=multi-user.target
