@@ -1,10 +1,34 @@
 import os
 from pathlib import Path
-from flask import Flask, flash, request, redirect, url_for, send_from_directory, render_template, jsonify
+from flask import Flask, request, redirect, url_for, render_template, jsonify
 from werkzeug.utils import secure_filename
+import blurhash
+from PIL import Image
+from functools import lru_cache
+
 
 PRINTER = "/dev/usb/lp0"
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+class Sticker:
+    path: str|os.PathLike
+    blurhash: str
+    width: int
+    height: int
+
+    def __init__(self, path: str | os.PathLike):
+        self.path = Path(path)
+
+        upload_folder = Path("assets/uploads")
+        try:
+            self.relative = str(self.path.relative_to(upload_folder))
+        except ValueError:
+            self.relative = str(self.path)
+
+        self.width, self.height, self.blurhash = get_sticker_meta(self.path)
+
+    def __repr__(self):
+        return f"path: <{self.path}> size:<{self.width}x{self.height}> hash:<{self.blurhash}>"
 
 app = Flask(__name__, static_url_path="/assets", static_folder="assets")
 app.config['UPLOAD_FOLDER'] = "assets/uploads"
@@ -37,11 +61,13 @@ def home(collection=None, subcol=None, subsubcol=None):
     stickers = [s.strip("/") for s in stickers]
     print(stickers)
 
+    sticker_objects = [Sticker(Path(app.config['UPLOAD_FOLDER']) / s) for s in stickers]
+
     return render_template(
         "index.html",
         current_collection=collection,
         collections=collections,
-        stickers=stickers,
+        stickers=sticker_objects,
         is_root_collection=not bool(collection),
         printer_is_online=os.path.exists(PRINTER)
     )
@@ -79,6 +105,7 @@ def sticker_upload():
         if os.path.exists(path):
             return "Il existe déjà un fichier avec ce nom"
         file.save(path)
+
         return redirect(url_for('home', collection=collection or None))
     else:
         return "Ohno, le fichier n'est pas ok!"
@@ -143,7 +170,7 @@ def sticker_delete():
     path = app.config['UPLOAD_FOLDER'] + "/" + name
     assert Path(path).exists()
     os.unlink(path)
-    return redirect(url_for('home'))
+    return '', 204
 
 
 @app.route('/stickers/search')
@@ -158,11 +185,26 @@ def search():
     stickers = [str(s).replace(app.config["UPLOAD_FOLDER"], "") for s in stickers]
     stickers = [s.strip("/") for s in stickers]
 
+    sticker_objects = [Sticker(Path(app.config['UPLOAD_FOLDER']) / s) for s in stickers]
+
     return render_template(
         "index.html",
         current_collection="",
         collections=[],
-        stickers=stickers,
+        stickers=sticker_objects,
         is_root_collection=False,
         printer_is_online=os.path.exists(PRINTER)
     )
+
+@lru_cache(1000)
+def get_sticker_meta(file_path: str | os.PathLike) -> tuple[int, int, str]:
+    """Return (width, height, blurhash) of the image"""
+    key = str(file_path)
+    print(file_path)
+    with Image.open(file_path) as im:
+        width, height = im.size
+        im.thumbnail((32, 32))
+        bh = blurhash.encode(im, x_components=4, y_components=3)
+
+    return (width, height, bh)
+

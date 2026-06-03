@@ -17,3 +17,5 @@ curl -L https://github.com/arrowtype/shantell-sans/releases/download/1.011/Shant
 unzip Shantell_Sans.zip "*Shantell_Sans-Normal-*.woff2" -d ./.tmp
 mv .tmp/*/Web/Static/*.woff2 ./
 rm *_Italic.woff2
+
+curl -L "https://cdn.jsdelivr.net/npm/blurhash@2.0.5/+esm" > blurhash.min.js
