@@ -31,7 +31,7 @@
     {% endif %}
     {% for collection in collections %}
         <a class="relative flex flex-col text-center pt-4 pb-2" href="{{ url_for('home', collection=collection) }}">
-            <img class="grow w-100 max-h-16 object-contain" src="{{ url_for('static', filename='folder' + (1 + (loop.index0 % 4))|string + '.png') }}">
+            <img class="grow w-100 max-h-16 object-contain" src="{{ url_for('static', filename='folder' + (1 + (loop.index0 % 5))|string + '.png') }}">
             <div class="leading-5 pt-1">{{ collection.split('/')[-1].replace('_', ' ') }}</div>
         </a>
     {% endfor %}

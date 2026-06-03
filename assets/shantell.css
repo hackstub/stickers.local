@@ -1,0 +1,47 @@
+@font-face {
+    font-family: "Shantell Sans";
+    src: url("Shantell_Sans-Normal-Light.woff2") format("woff2");
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Shantell Sans";
+    src: url("Shantell_Sans-Normal-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Shantell Sans";
+    src: url("Shantell_Sans-Normal-Medium.woff2") format("woff2");
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Shantell Sans";
+    src: url("Shantell_Sans-Normal-SemiBold.woff2") format("woff2");
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Shantell Sans";
+    src: url("Shantell_Sans-Normal-Bold.woff2") format("woff2");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Shantell Sans";
+    src: url("Shantell_Sans-Normal-ExtraBold.woff2") format("woff2");
+    font-weight: 800;
+    font-style: normal;
+    font-display: swap;
+}
