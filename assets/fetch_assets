@@ -12,3 +12,8 @@ sed -i 's@../fonts/@@g' ./fork-awesome.min.css
 curl https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/fonts/forkawesome-webfont.woff2?v=1.2.0 > forkawesome-webfont.woff2
 curl https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/fonts/forkawesome-webfont.woff?v=1.2.0 > forkawesome-webfont.woff
 curl https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/fonts/forkawesome-webfont.ttf?v=1.2.0 > forkawesome-webfont.ttf
+
+curl -L https://github.com/arrowtype/shantell-sans/releases/download/1.011/Shantell_Sans_1.011.zip > Shantell_Sans.zip
+unzip Shantell_Sans.zip "*Shantell_Sans-Normal-*.woff2" -d ./.tmp
+mv .tmp/*/Web/Static/*.woff2 ./
+rm *_Italic.woff2
