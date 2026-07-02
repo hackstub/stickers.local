@@ -1,4 +1,5 @@
 Flask==3.0.3
 brother-ql==0.9.4
 blurhash-python==1.2.2
+persist-cache==0.4.4
 #Pillow>=9

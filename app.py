@@ -4,14 +4,15 @@ from flask import Flask, request, redirect, url_for, render_template, jsonify
 from werkzeug.utils import secure_filename
 import blurhash
 from PIL import Image
-from functools import lru_cache
+from persist_cache import cache
 
 
 PRINTER = "/dev/usb/lp0"
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
+
 class Sticker:
-    path: str|os.PathLike
+    path: str | os.PathLike
     blurhash: str
     width: int
     height: int
@@ -196,11 +197,10 @@ def search():
         printer_is_online=os.path.exists(PRINTER)
     )
 
-@lru_cache(1000)
+
+@cache(name="sticker_meta", dir=".cache")
 def get_sticker_meta(file_path: str | os.PathLike) -> tuple[int, int, str]:
     """Return (width, height, blurhash) of the image"""
-    key = str(file_path)
-    print(file_path)
     with Image.open(file_path) as im:
         width, height = im.size
         im.thumbnail((32, 32))
