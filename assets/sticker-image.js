@@ -48,31 +48,49 @@ export class StickerImage extends HTMLElement {
     this
       .querySelector(".delete")
       .addEventListener("click", this.deleteHandler(sticker));
+
+    // Advanced print button
+    this
+      .querySelector(".advanced-print")
+      .addEventListener("click", this.advancedPrintHandler(sticker));
+
+    // Process image
+    this
+      .querySelector(".process-image")
+      .addEventListener("click", this.processImageHandler(sticker));
   }
 
+  advancedPrintHandler = (sticker) => (e) => {
+    document.getElementById("modal-advanced-print").classList.toggle("hidden");
+    document.getElementById("modal-advanced-print").dataset.sticker = sticker;
+    document.getElementById("modal-advanced-print-error").textContent = "";
+    document.getElementById("modal-advanced-print-sticker").textContent = sticker;
+  };
+
+  processImageHandler = (sticker) => (e) => {
+    document.getElementById("modal-processing").classList.toggle("hidden");
+    document.getElementById("modal-processing").dataset.sticker = sticker;
+    document.getElementById("modal-processing-sticker").textContent = sticker;
+    // Trigger dummy even to trigger the process preview update
+    document.querySelector("#modal-processing input[name='brightness']").dispatchEvent(new Event('input'));
+  };
+
   printHandler = (sticker) => (e) => {
-    if (e.ctrlKey) {
-      document.getElementById("modal").classList.toggle("hidden");
-      document.getElementById("modal-error").textContent = "";
-      document.getElementById("modal").dataset.sticker = sticker;
-      document.getElementById("modal-sticker-name").textContent = sticker;
-    } else {
-      fetch(window.STICKER_PRINT_URL + `?sticker=${sticker}`, {
-        method: "POST",
-      })
-        .then((r) => r.json())
-        .then((data) => {
-          if (!data.success) {
-            document.getElementById("toast").classList.remove("hidden");
-            document.getElementById("toast-error").textContent =
-              "Ohno, une impression a échoué! Il faut regarder les logs!";
-            setTimeout(
-              () => document.getElementById("toast").classList.add("hidden"),
-              2000,
-            );
-          }
-        });
-    }
+    fetch(window.STICKER_PRINT_URL + `?sticker=${sticker}`, {
+      method: "POST",
+    })
+    .then((r) => r.json())
+    .then((data) => {
+      if (!data.success) {
+        document.getElementById("toast").classList.remove("hidden");
+        document.getElementById("toast-error").textContent =
+          "Ohno, une impression a échoué! Il faut regarder les logs!";
+        setTimeout(
+          () => document.getElementById("toast").classList.add("hidden"),
+          2000,
+        );
+      }
+    });
   };
 
   deleteHandler = (sticker) => () => {

@@ -42,11 +42,17 @@
         <sticker-image sticker="{{ sticker.relative }}" hash="{{ sticker.blurhash }}"
         src="{{ url_for('static', filename='uploads/' + sticker.relative) }}" width="{{ sticker.width }}" height="{{ sticker.height }}">
             <div class="relative flex flex-col text-center rounded-md h-full">
-                <button class="rounded-md absolute bottom-0 left-0 bg-blue-500 text-white pt-0.5 p-0 h-7 w-7 print">
+                <button class="rounded-md absolute bottom-0 left-0 bg-blue-500 text-white pt-0.5 p-0 h-7 w-7 print" aria-label="Imprimer" title="Imprimer" >
                     <i class="fa fa-print" aria-hidden="true"></i>
                 </button>
-                <button class="rounded-md absolute top-0 right-0 text-red-400 text-xs p-0 h-4 w-4 delete">
+                <button class="rounded-md absolute top-0 right-0 text-red-400 text-xs p-0 h-4 w-4 delete" aria-label="Supprimer" title="Supprimer">
                     <i class="fa fa-times" aria-hidden="true"></i>
+                </button>
+                <button class="rounded-md absolute bottom-0 right-6 border bg-white border-purple-500 text-purple-500 p-0 h-5 w-5 text-sm advanced-print" aria-label="Impression avancée" title="Impression avancée">
+                    <i class="fa fa-print" aria-hidden="true"></i>
+                </button>
+                <button class="rounded-md absolute bottom-0 right-0 border bg-white border-blue-500 text-blue-500 p-0 h-5 w-5 text-sm process-image" aria-label="Éditer" title="Éditer">
+                    <i class="fa fa-pencil" aria-hidden="true"></i>
                 </button>
                 <img id="sticker-image" class="grow max-h-64 object-contain">
             </div>
@@ -82,7 +88,7 @@
     </div>
 
     <div
-      id="modal"
+      id="modal-advanced-print"
       class="hidden fixed inset-0 z-[999] grid h-screen w-screen place-items-center bg-black bg-opacity-30 backdrop-blur-sm transition transition-opacity duration-300"
     >
       <div
@@ -94,7 +100,7 @@
         </div>
         <div>
             <div class="pb-3">
-                <span id="modal-sticker-name" class="text-sm text-grey-500"></span>
+                <span id="modal-advanced-print-sticker" class="text-sm text-grey-500"></span>
             </div>
             <div class="pb-3">
                 <label for="print_type">Taille</label>
@@ -108,14 +114,49 @@
                 <input id="modal-print-quantity" type="number" name="quantity" min="1" max="1000" value="1" class="border-0 rounded-md" />
             </div>
             <div>
-              <button id="modal-print"
+              <button id="modal-advanced-print-button"
                       class="rounded-md bg-blue-500 py-2 px-4 border border-transparent text-center text-sm text-white shadow-md ml-2"
                       >
                 <i class="fa fa-print" aria-hidden="true"></i> Go
               </button>
             </div>
-            <div id="modal-error" class="text-red-500 pt-4 font-bold">
+            <div id="modal-advanced-print-error" class="text-red-500 pt-4 font-bold">
             </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="modal-processing"
+      class="hidden fixed inset-0 z-[999] grid h-screen w-screen place-items-center bg-black bg-opacity-30 backdrop-blur-sm transition transition-opacity duration-300"
+    >
+      <div
+        class="relative m-4 p-4 w-72 rounded-xl shadow-sm text-center text-gray-800"
+        style="background-color: #fdfce3;"
+      >
+        <div class="pb-3 flex">
+          <span class="flex-grow font-bold text-xl">Traitement d'image</span>
+        </div>
+        <div>
+            <span id="modal-processing-sticker" class="text-sm text-grey-500"></span>
+            <div class="pb-1">
+                <label for="brightess">Luminosité</label>
+                <input name="brightness" class="w-full cursor-pointer" type="range" min="0" max="3" step="0.02" value="1" />
+            </div>
+            <div class="pb-1">
+                <label for="contrast">Contraste</label>
+                <input name="contrast" class="w-full cursor-pointer" type="range" min="0" max="3" step="0.02" value="1" />
+            </div>
+            <div class="pb-1">
+                <label for="brightess2">Luminosité 2</label>
+                <input name="brightness2" class="w-full cursor-pointer" type="range" min="0" max="3" step="0.02" value="1" />
+            </div>
+            <img id="processed_image" />
+            <button id="modal-processing-button"
+                    class="rounded-md bg-blue-500 mt-2 py-2 px-4 border border-transparent text-center text-sm text-white shadow-md ml-2"
+                    >
+              <i class="fa fa-download" aria-hidden="true"></i> Sauvegarder comme nouvelle image
+            </button>
         </div>
       </div>
     </div>

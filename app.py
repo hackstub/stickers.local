@@ -1,9 +1,12 @@
 import os
+import base64
 from pathlib import Path
+from io import BytesIO
+
+import blurhash
+from PIL import Image, ImageEnhance
 from flask import Flask, request, redirect, url_for, render_template, jsonify
 from werkzeug.utils import secure_filename
-import blurhash
-from PIL import Image
 from persist_cache import cache
 
 
@@ -30,6 +33,7 @@ class Sticker:
 
     def __repr__(self):
         return f"path: <{self.path}> size:<{self.width}x{self.height}> hash:<{self.blurhash}>"
+
 
 app = Flask(__name__, static_url_path="/assets", static_folder="assets")
 app.config['UPLOAD_FOLDER'] = "assets/uploads"
@@ -196,6 +200,40 @@ def search():
         is_root_collection=False,
         printer_is_online=os.path.exists(PRINTER)
     )
+
+
+@app.route('/stickers/process', methods=['GET', 'POST'])
+def sticker_process():
+
+    name = request.args.get("sticker")
+    brightness = float(request.args.get("brightness"))
+    contrast = float(request.args.get("contrast"))
+    brightness2 = float(request.args.get("brightness2"))
+
+    assert brightness >= 0 and brightness <= 5
+    assert contrast >= 0 and contrast <= 5
+    assert brightness2 >= 0 and brightness2 <= 5
+    assert name and ".." not in name and "'" not in name and ";" not in name
+    path = app.config['UPLOAD_FOLDER'] + "/" + name
+    assert Path(path).exists()
+
+    with Image.open(path) as im:
+        if im.mode != 'L':
+            im = im.convert('L')
+        im = ImageEnhance.Brightness(im).enhance(brightness)
+        im = ImageEnhance.Brightness(im).enhance(contrast)
+        im = ImageEnhance.Brightness(im).enhance(brightness2)
+
+        if request.method == 'POST':
+            path_without_ext, ext = path.rsplit(".", 1)
+            new_name = f"{path_without_ext}_bw_b{brightness}c{contrast}b2{brightness2}.{ext}"
+            im.save(new_name, format=ext.upper())
+            return ""
+        else:
+            buffer = BytesIO()
+            im.save(buffer, format="JPEG")
+            img_base64 = "data:image/jpeg;base64," + base64.b64encode(buffer.getvalue()).decode()
+            return img_base64
 
 
 @cache(name="sticker_meta", dir=".cache")
