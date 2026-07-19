@@ -13,6 +13,7 @@
         window.STICKER_DELETE_URL = "{{ url_for('sticker_delete') }}";
         window.STICKER_SEARCH_URL = "{{ url_for('search') }}";
         window.STICKER_PROCESS_URL = "{{ url_for('sticker_process') }}";
+        window.LABEL_GENERATE_URL = "{{ url_for('label_generate') }}";
     </script>
     <script type="module" src="{{ url_for('static', filename='app.js') }}"></script>
 
@@ -22,7 +23,7 @@
               @apply rounded-md shadow-sm border-gray-200 bg-neutral-50;
           }
           .btn {
-              @apply text-sm font-medium rounded-md px-4 py-2 transition;
+              @apply text-sm font-medium rounded-md px-4 py-2 transition hover:brightness-125;
           }
           .btn-sm {
               @apply text-xs font-medium rounded-md px-2 py-2 transition;
@@ -33,12 +34,28 @@
           .btn-primary {
               @apply text-white bg-blue-500 hover:bg-blue-700;
           }
+          h2 {
+              @apply text-2xl font-bold pb-2;
+          }
+          .modal {
+              @apply fixed inset-0 z-[999] h-screen w-screen place-items-center bg-black bg-opacity-30 backdrop-blur-sm transition transition-opacity duration-300
+          }
         }
   </style>
   <style>
     body {
         font-family: "Shantell Sans", ui-sans-serif, system-ui, sans-serif;
         font-weight: 500;
+    }
+    input[type="radio"].custom-radio + label {
+
+        background-color: none;
+        padding: 2px 7px;
+        border-radius: 5px;
+    }
+    input[type="radio"].custom-radio:checked + label {
+        background-color: #ddd;
+        font-weight: bold;
     }
   </style>
   </head>

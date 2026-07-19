@@ -18,6 +18,7 @@
 
     {% if not printer_is_online %}
     <div class="text-center text-red-500 font-bold text-xl pb-5">
+        <img class="mx-auto w-24" src="{{ url_for('static', filename='ohno.png') }}" />
         ⚠️ L'imprimante est hors ligne / inaccessible ⚠️
     </div>
     {% endif %}
@@ -62,22 +63,54 @@
         
     <hr class="pb-10"/>
 
-    <div class="text-center">
-        <h2 class="text-2xl">Ajouter un sticker</h2>
-        <form action="{{ url_for('sticker_upload') }}" method="post" enctype="multipart/form-data">
-          <input hidden type="text" name="collection" value="{{ current_collection }}">
-          <input class="py-2" type="file" name="file">
-          <br/>
-          <button class="btn" style="background-color: paleturquoise" type="submit"><i class="fa fa-download" aria-hidden="true"></i> Téléverser</button>
-        </form>
-        <div class="sm">
+    <div class="flex flex-row justify-between px-12">
+        <div class="text-center w-1/2 pe-5">
+            <h2>Ajouter un sticker</h2>
+            <form action="{{ url_for('sticker_upload') }}" method="post" enctype="multipart/form-data">
+              <input hidden type="text" name="collection" value="{{ current_collection }}">
+              <div id="sticker-upload-input" class="mt-3">
+                  <label for="file" class="border border-gray-400 border-dashed rounded-md px-5 py-2 bg-white hover:bg-gray-100 transition"><i class="fa fa-search"></i> Choisir un fichier</label>
+                <input type="file" name="file" style="display: none;">
+              </div>
+              <br/>
+              <button class="btn !font-bold rotate-2 !text-lg" style="background-image: url({{ url_for('static', filename='button.svg')}}); background-position: center; background-repeat: no-repeat; background-size: cover; width: 11rem; height: 4.5rem; color: #00426a;" type="submit">
+                  Ajouter
+              </button>
+            </form>
         </div>
+        <div class="text-center w-1/2 ps-5">
+            <h2 class="text-2xl">Faire une étiquette</h2>
+            <form action="{{ url_for('label_generate') }}" method="post" enctype="multipart/form-data">
+            <textarea id="label-generator-text" class="block mx-auto border border-dashed border-gray-400" name="text" rows="2" style="box-shadow: none !important;"></textarea>
+            <select id="label-generator-font" class="mt-3" name="font">
+                {% for name, infos in fonts.items() %}
+                <option style="background-image: url('{{ infos['preview'] }}');" value="{{ name }}" {% if name == 'Gotham Ultra' %}selected{% endif %}>{{ name }}</option>
+                {% endfor %}
+
+            </select>
+            <img class="py-5 mx-auto" id="label-generator-preview" style="max-width: 80%; "/>
+            <div class="flex">
+              <div class="w-1/2">
+                <button class="btn block !font-bold -rotate-3 me-3 !text-lg" style="background-image: url({{ url_for('static', filename='button2.svg')}}); background-position: center; background-repeat: no-repeat; background-size: cover; width: 11.5rem; height: 4.5rem; color: #156000;" type="submit" name="label-generator-action" value="print">
+                    Imprimer
+                </button>
+                <div>
+                  <input type="radio" name="print-label-size" class="custom-radio hidden" id="print-label-small" value="small" checked>
+                  <label for="print-label-small">Petit</label>
+                  <input type="radio" name="print-label-size" class="custom-radio hidden" id="print-label-large" value="large">
+                  <label for="print-label-large">Grand</label>
+                </div>
+              </div>
+              <div class="w-1/2">
+              <button class="btn !font-bold rotate-3 !text-lg" style="background-image: url({{ url_for('static', filename='button3.svg')}}); background-position: center; background-repeat: no-repeat; background-size: cover; width: 11rem; height: 4.5rem; color: #3b0051;" type="submit" name="label-generator-action" value="save">
+                  Sauvegarder
+              </button>
+              </div>
+            </div>
+            </form>
     </div>
 
-    <div
-      id="toast"
-      class="hidden fixed inset-0 z-[999] grid h-screen w-screen place-items-center bg-black bg-opacity-10 transition-opacity duration-300"
-    >
+    <div id="toast" class="modal hidden">
       <div
         class="relative m-4 p-4 w-96 rounded-xl shadow-sm text-center text-red-500 font-bold"
         style="background-color: #fdfce3;"
@@ -87,10 +120,7 @@
       </div>
     </div>
 
-    <div
-      id="modal-advanced-print"
-      class="hidden fixed inset-0 z-[999] grid h-screen w-screen place-items-center bg-black bg-opacity-30 backdrop-blur-sm transition transition-opacity duration-300"
-    >
+    <div id="modal-advanced-print" class="modal hidden">
       <div
         class="relative m-4 p-4 w-72 rounded-xl shadow-sm text-center text-gray-800"
         style="background-color: #fdfce3;"
@@ -126,10 +156,7 @@
       </div>
     </div>
 
-    <div
-      id="modal-processing"
-      class="hidden fixed inset-0 z-[999] grid h-screen w-screen place-items-center bg-black bg-opacity-30 backdrop-blur-sm transition transition-opacity duration-300"
-    >
+    <div id="modal-processing" class="modal hidden">
       <div
         class="relative m-4 p-4 w-72 rounded-xl shadow-sm text-center text-gray-800"
         style="background-color: #fdfce3;"

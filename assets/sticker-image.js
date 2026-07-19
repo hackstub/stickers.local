@@ -62,6 +62,7 @@ export class StickerImage extends HTMLElement {
 
   advancedPrintHandler = (sticker) => (e) => {
     document.getElementById("modal-advanced-print").classList.toggle("hidden");
+    document.getElementById("modal-advanced-print").classList.toggle("grid");
     document.getElementById("modal-advanced-print").dataset.sticker = sticker;
     document.getElementById("modal-advanced-print-error").textContent = "";
     document.getElementById("modal-advanced-print-sticker").textContent = sticker;
@@ -69,6 +70,7 @@ export class StickerImage extends HTMLElement {
 
   processImageHandler = (sticker) => (e) => {
     document.getElementById("modal-processing").classList.toggle("hidden");
+    document.getElementById("modal-processing").classList.toggle("grid");
     document.getElementById("modal-processing").dataset.sticker = sticker;
     document.getElementById("modal-processing-sticker").textContent = sticker;
     // Trigger dummy even to trigger the process preview update
@@ -83,11 +85,11 @@ export class StickerImage extends HTMLElement {
     .then((data) => {
       if (!data.success) {
         document.getElementById("toast").classList.remove("hidden");
-        document.getElementById("toast-error").textContent =
-          "Ohno, une impression a échoué! Il faut regarder les logs!";
+        document.getElementById("toast").classList.add("grid");
+        document.getElementById("toast-error").textContent = "Ohno, une impression a échoué ! Il faut regarder les logs !";
         setTimeout(
-          () => document.getElementById("toast").classList.add("hidden"),
-          2000,
+          () => { document.getElementById("toast").classList.add("hidden"); document.getElementById("toast").classList.add("grid") },
+          5000,
         );
       }
     });

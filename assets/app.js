@@ -17,6 +17,7 @@ document.getElementById("modal-advanced-print-button").addEventListener("click",
     .then((data) => {
       if (data.success) {
         document.getElementById("modal-advanced-print").classList.add("hidden");
+        document.getElementById("modal-advanced-print").classList.remove("grid");
       } else {
         document.getElementById("modal-error").textContent =
           "Ohno, l'impression a échoué! Il faut regarder les logs!";
@@ -34,6 +35,23 @@ document.getElementById("search").addEventListener("keyup", function (event) {
     );
   }
 });
+
+document.querySelector('#label-generator-font').addEventListener("change", updateLabelGeneratorPreview);
+document.querySelector('#label-generator-text').addEventListener("input", updateLabelGeneratorPreview);
+
+function updateLabelGeneratorPreview() {
+  var text = document.getElementById("label-generator-text").value;
+  var font = document.getElementById("label-generator-font").value;
+  fetch(
+    window.LABEL_GENERATE_URL +
+      `?text=${encodeURIComponent(text)}&font=${font}`,
+    { method: "GET" },
+  )
+    .then((response) => response.text())
+    .then((data) => {
+        document.getElementById("label-generator-preview").src = data
+    })
+}
 
 function updateProcessImage() {
     var sticker = document.getElementById("modal-processing").getAttribute("data-sticker");
@@ -82,6 +100,18 @@ document.onkeydown = function (evt) {
   }
   if (isEscape) {
     document.getElementById("modal-advanced-print").classList.add("hidden");
+    document.getElementById("modal-advanced-print").classList.remove("grid");
     document.getElementById("modal-processing").classList.add("hidden");
+    document.getElementById("modal-processing").classList.remove("grid");
   }
+};
+
+
+document.querySelector("#sticker-upload-input label").addEventListener("click", function (event) {
+    document.querySelector("#sticker-upload-input input").click();
+});
+document.querySelector("#sticker-upload-input input").onchange = function() {
+  const fileName = this.files[0]?.name;
+  const label = document.querySelector("#sticker-upload-input label");
+  label.innerText = fileName ?? "Choisir un fichier";
 };

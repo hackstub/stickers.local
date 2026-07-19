@@ -1,7 +1,9 @@
 assets/uploads
+assets/fonts
 assets/fork*
 venv
 __pycache__
+.cache
 *.save*
 scripts/didder*
 *gitignore

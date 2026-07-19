@@ -1,10 +1,13 @@
+import sys
+import subprocess
 import os
 import base64
 from pathlib import Path
 from io import BytesIO
+from slugify import slugify
 
 import blurhash
-from PIL import Image, ImageEnhance
+from PIL import Image, ImageEnhance, ImageDraw, ImageFont
 from flask import Flask, request, redirect, url_for, render_template, jsonify
 from werkzeug.utils import secure_filename
 from persist_cache import cache
@@ -64,7 +67,6 @@ def home(collection=None, subcol=None, subsubcol=None):
     stickers = sorted(stickers, key=lambda f: f.stat().st_mtime, reverse=True)
     stickers = [collection + "/" + str(s.name) for s in stickers]
     stickers = [s.strip("/") for s in stickers]
-    print(stickers)
 
     sticker_objects = [Sticker(Path(app.config['UPLOAD_FOLDER']) / s) for s in stickers]
 
@@ -74,7 +76,8 @@ def home(collection=None, subcol=None, subsubcol=None):
         collections=collections,
         stickers=sticker_objects,
         is_root_collection=not bool(collection),
-        printer_is_online=os.path.exists(PRINTER)
+        printer_is_online=os.path.exists(PRINTER),
+        fonts=fonts
     )
 
 
@@ -118,6 +121,9 @@ def sticker_upload():
 
 @app.route('/stickers/print', methods=['POST'])
 def sticker_print():
+
+    if not os.path.exists(PRINTER):
+        return jsonify(success=False)
 
     name = request.args.get("sticker")
     quantity = request.args.get("quantity", 1)
@@ -236,6 +242,44 @@ def sticker_process():
             return img_base64
 
 
+@app.route('/label/generate', methods=['GET', 'POST'])
+def label_generate():
+
+    text = request.values.get("text")
+    font = request.values.get("font")
+
+    assert isinstance(text, str) and len(text) < 10000
+    assert isinstance(font, str) and font in fonts
+
+    img = text_to_image(text=text, font_filepath=f"assets/fonts/{fonts[font]['filename']}", font_size=60, color=(0, 0, 0))
+
+    if request.method == 'POST':
+
+        action = request.values.get('label-generator-action')
+        assert action in ["print", "save"]
+        print_size = request.values.get('print-label-size')
+        assert print_size in ["small", "large"]
+
+        slug = slugify(text, separator="_", max_length=100)
+        if action == "print":
+            path = f"/tmp/{slug}.png"
+            img.save(path, format="PNG")
+
+            dithering = "true"
+            quantity = 1
+            ret = os.system(f"SIZE={print_size} DITHERING={dithering} QUANTITY={quantity} bash scripts/print.sh '{path}'")
+            return redirect(url_for('home', collection=None))
+        else:
+            path = f"assets/uploads/{slug}.png"
+            img.save(path, format="PNG")
+            return redirect(url_for('home', collection=None))
+    else:
+        buffer = BytesIO()
+        img.save(buffer, format="PNG")
+        img_base64 = "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode()
+        return img_base64
+
+
 @cache(name="sticker_meta", dir=".cache")
 def get_sticker_meta(file_path: str | os.PathLike) -> tuple[int, int, str]:
     """Return (width, height, blurhash) of the image"""
@@ -246,3 +290,57 @@ def get_sticker_meta(file_path: str | os.PathLike) -> tuple[int, int, str]:
 
     return (width, height, bh)
 
+
+def text_to_image(
+    text: str,
+    font_filepath: str,
+    font_size: int,
+    color: tuple[int, int, int],
+    font_align: str = "center",
+):
+    font = ImageFont.truetype(font_filepath, size=font_size)
+
+    # Temporary image used only for measuring the text
+    dummy = Image.new("RGBA", (1, 1))
+    draw = ImageDraw.Draw(dummy)
+
+    left, top, right, bottom = draw.multiline_textbbox(
+        (0, 0),
+        text,
+        font=font,
+        align=font_align,
+    )
+
+    width = int(right - left)
+    height = int(bottom - top)
+
+    img = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+
+    # Offset by the bbox origin in case it isn't (0, 0)
+    draw.multiline_text(
+        (-left, -top),
+        text,
+        font=font,
+        fill=color,
+        align=font_align,
+    )
+
+    return img
+
+
+def list_fonts():
+    raw_list = subprocess.getoutput("fc-scan --format '%{file}: %{family}\n' assets/fonts/").strip().split("\n")
+    fonts = {}
+    for raw_infos in raw_list:
+        path, names = raw_infos.split(":")
+        filename = path.split("/")[-1].strip()
+        name = names.split(",")[-1].strip()
+        if name in fonts:
+            print(f"Uhoh, duplicate font with name '{name}' ? ({fonts[name]['filename']} vs {filename})", file=sys.stderr)
+            continue
+        fonts[name] = {"filename": filename}
+    return fonts
+
+
+fonts = list_fonts()
