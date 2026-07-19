@@ -55,13 +55,14 @@ function updateLabelGeneratorPreview() {
 
 function updateProcessImage() {
     var sticker = document.getElementById("modal-processing").getAttribute("data-sticker");
+    var decolor = document.querySelector("#modal-processing input[name='decolor']").value;
     var brightness = document.querySelector("#modal-processing input[name='brightness']").value;
     var contrast = document.querySelector("#modal-processing input[name='contrast']").value;
     var brightness2 = document.querySelector("#modal-processing input[name='brightness2']").value;
 
     fetch(
       window.STICKER_PROCESS_URL +
-        `?sticker=${sticker}&brightness=${brightness}&contrast=${contrast}&brightness2=${brightness2}`,
+        `?sticker=${sticker}&decolor=${decolor}&brightness=${brightness}&contrast=${contrast}&brightness2=${brightness2}`,
       { method: "GET" },
     )
       .then((response) => response.text())
@@ -70,18 +71,19 @@ function updateProcessImage() {
       })
 }
 
-var processInputs = document.querySelectorAll("#modal-processing input[name='brightness'], #modal-processing input[name='brightness2'], #modal-processing input[name='contrast']")
+var processInputs = document.querySelectorAll("#modal-processing input[name='decolor'], #modal-processing input[name='brightness'], #modal-processing input[name='brightness2'], #modal-processing input[name='contrast']")
 for (var i = 0; i < processInputs.length; i++) { processInputs[i].addEventListener('input', updateProcessImage); }
 
 document.getElementById("modal-processing-button").addEventListener("click", function (event) {
     event.preventDefault();
     var sticker = document.getElementById("modal-processing").getAttribute("data-sticker");
+    var decolor = document.querySelector("#modal-processing input[name='decolor']").value;
     var brightness = document.querySelector("#modal-processing input[name='brightness']").value;
     var contrast = document.querySelector("#modal-processing input[name='contrast']").value;
     var brightness2 = document.querySelector("#modal-processing input[name='brightness2']").value;
     fetch(
       window.STICKER_PROCESS_URL +
-        `?sticker=${sticker}&brightness=${brightness}&contrast=${contrast}&brightness2=${brightness2}`,
+        `?sticker=${sticker}&decolor=${decolor}&brightness=${brightness}&contrast=${contrast}&brightness2=${brightness2}`,
       { method: "POST" },
     )
     .then((response) => {

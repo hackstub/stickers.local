@@ -5,6 +5,7 @@ import base64
 from pathlib import Path
 from io import BytesIO
 from slugify import slugify
+import numpy as np
 
 import blurhash
 from PIL import Image, ImageEnhance, ImageDraw, ImageFont
@@ -212,10 +213,12 @@ def search():
 def sticker_process():
 
     name = request.args.get("sticker")
+    decolor = float(request.args.get("decolor"))
     brightness = float(request.args.get("brightness"))
     contrast = float(request.args.get("contrast"))
     brightness2 = float(request.args.get("brightness2"))
 
+    assert decolor >= 0 and decolor <= 2
     assert brightness >= 0 and brightness <= 5
     assert contrast >= 0 and contrast <= 5
     assert brightness2 >= 0 and brightness2 <= 5
@@ -225,14 +228,16 @@ def sticker_process():
 
     with Image.open(path) as im:
         if im.mode != 'L':
-            im = im.convert('L')
+            #im = im.convert('L')
+            im = _decolor_image(im, strength=decolor)
+
         im = ImageEnhance.Brightness(im).enhance(brightness)
         im = ImageEnhance.Brightness(im).enhance(contrast)
         im = ImageEnhance.Brightness(im).enhance(brightness2)
 
         if request.method == 'POST':
             path_without_ext, ext = path.rsplit(".", 1)
-            new_name = f"{path_without_ext}_bw_b{brightness}c{contrast}b2{brightness2}.{ext}"
+            new_name = f"{path_without_ext}_bw{decolor}_b{brightness}c{contrast}b2{brightness2}.{ext}"
             im.save(new_name, format=ext.upper())
             return ""
         else:
@@ -240,6 +245,41 @@ def sticker_process():
             im.save(buffer, format="JPEG")
             img_base64 = "data:image/jpeg;base64," + base64.b64encode(buffer.getvalue()).decode()
             return img_base64
+
+
+def _decolor_image(img, strength=1.0, power=2.0):
+    # Strength: 0.0 -> 1.0, how strongly colorful pixels are whitened.
+    # Power: 1.0 -> 3.0 : hgher values preserve dark colors more.
+
+    img = img.convert("RGB")
+
+    # Float image in [0,1]
+    rgb = np.asarray(img, dtype=np.float32) / 255.0
+
+    r = rgb[..., 0]
+    g = rgb[..., 1]
+    b = rgb[..., 2]
+
+    # Perceived grayscale (Rec. 601 luminance)
+    lum = 0.3 * r + 0.55 * g + 0.15 * b
+
+    # Chroma (amount of color)
+    mx = np.maximum.reduce([r, g, b])
+    mn = np.minimum.reduce([r, g, b])
+    chroma = mx - mn
+
+    # Effective color strength
+    colorfulness = chroma * (mx ** (power - 1))
+
+    # Blend grayscale toward white
+    gray = lum + strength * colorfulness * (1.0 - lum)
+
+    # Clamp to [0,1]
+    gray = np.clip(gray, 0.0, 1.0)
+
+    out = Image.fromarray((gray * 255).astype(np.uint8), mode="L")
+    return out
+    # out.save("output.png")
 
 
 @app.route('/label/generate', methods=['GET', 'POST'])
