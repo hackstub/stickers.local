@@ -4,7 +4,7 @@ Description=Impression de stickers avec bouton(pin27)
 [Service]
 Type=simple
 Restart=always
-ExecStart=/bin/bash /usr/bin/buttonsticker.sh
+ExecStart=/usr/bin/python3 /home/pi/stickers.local/scripts/randomprint.py
 
 [Install]
 WantedBy=multi-user.target
