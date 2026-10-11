@@ -4,4 +4,5 @@ blurhash-python==1.2.2
 persist-cache==0.4.4
 python-slugify==8.0.4
 numpy==2.5.1
+python-dotenv
 #Pillow>=9

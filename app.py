@@ -2,6 +2,7 @@ import sys
 import subprocess
 import os
 import base64
+from dotenv import load_dotenv
 from pathlib import Path
 from io import BytesIO
 from slugify import slugify
@@ -13,8 +14,8 @@ from flask import Flask, request, redirect, url_for, render_template, jsonify
 from werkzeug.utils import secure_filename
 from persist_cache import cache
 
-
-PRINTER = "/dev/usb/lp0"
+load_dotenv()
+PRINTER = os.getenv("PRINTER") or "/dev/usb/lp0"
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 

@@ -1,6 +1,8 @@
-assets/uploads
+.env
+assets/uploads*
 assets/fonts
 assets/fork*
+assets/tailwind*
 venv
 __pycache__
 .cache

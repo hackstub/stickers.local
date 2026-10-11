@@ -1,11 +1,20 @@
 set -eux
 
+# Options from the env file
+[[ ! -e ../.env ]] || source ../.env
+PRINTER=${PRINTER:-/dev/usb/lp0}
+PRINTER_MODEL=${PRINTER_MODEL:-QL-570}
+DEFAULT_PRINT_SIZE=${DEFAULT_PRINT_SIZE:-large}
+PAPER_WIDTH=${PAPER_WIDTH:-62}
+IMAGE_PREPROCESSING_WIDTH=${IMAGE_PREPROCESSING_WIDTH:-696}
+
+# Options from the python call
 DITHERING=${DITHERING:-true}
 QUANTITY=${QUANTITY:-1}
 SIZE=${SIZE:-default}
 if [[ "$SIZE" == "default" ]]
 then
-    SIZE="large"
+    SIZE="${DEFAULT_PRINT_SIZE:-large}"
 fi
 
 target="$1"
@@ -50,7 +59,7 @@ then
        exit 1
     fi
     ./scripts/didder_1.3.0_linux_${didder_suffix} \
-        --height 696 \
+        --height $IMAGE_PREPROCESSING_WIDTH \
         --brightness 0.1 \
         --palette "black white" \
         --in "$target_before_process" \
@@ -61,11 +70,11 @@ else
     cp "$target_before_process" "$target"
 fi
 
-export BROTHER_QL_PRINTER=file:///dev/usb/lp0
-export BROTHER_QL_MODEL=QL-570
+export BROTHER_QL_PRINTER=file://$PRINTER
+export BROTHER_QL_MODEL=$PRINTER_MODEL
 for I in $(seq 1 $QUANTITY)
 do
-    $(dirname $0)/../venv/bin/brother_ql print -r90 -l 62 "$target"
+    $(dirname $0)/../venv/bin/brother_ql print -r90 -l ${PAPER_WIDTH:-64} "$target"
     sleep 0.1
 done
 
