@@ -1,18 +1,15 @@
 <h2 class="font-bold text-xl pb-3">Impression en masse</h2>
 <h3 class="text-sm text-grey-500">{{ sticker }}</h3>
 <form
-    hx-post="{{ url_for('sticker_print') }}"
+    hx-post="{{ url_for('sticker_print', sticker=sticker) }}"
     hx-swap="none"
     hx-status:4xx="target:#modal-errors swap:innerHTML"
     hx-status:5xx="target:#modal-errors swap:innerHTML"
     hx-on::after:request="if (ctx.response.status == 200) { closeModal() }"
 >
-  
-  <input name="sticker" type="hidden" value="{{ sticker }}">
-
   <div class="pb-3">
-      <label for="print_type">Taille</label>
-      <select name="print_type">
+      <label for="size">Taille</label>
+      <select name="size">
           <option value="small">Petit</option>
           <option value="large">Grand</option>
       </select>

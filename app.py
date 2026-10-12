@@ -136,9 +136,9 @@ def sticker_print():
 
     try:
         name = request.args.get("sticker")
-        quantity = request.args.get("quantity", type=int) or 1
-        size = request.args.get("size", "default")
-        dithering = request.args.get("dithering", "true")
+        quantity = request.form.get("quantity", 1, type=int)
+        size = request.form.get("size", "default")
+        dithering = request.form.get("dithering", "true")
 
         assert (
             quantity > 0 and quantity < 500
