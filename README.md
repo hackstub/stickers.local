@@ -49,27 +49,46 @@ A more long-term solution is to configure a systemd service that starts at boot.
 
 ### `systemd` setup
 
-(FIXME: add the gunicorn conf and wsgi bit (is it really needed?))
+This assume that you did setup stuff in `/var/www/stickers`
 
 ```bash
-cp systemd.service /etc/systemd/system/stickers.local.service
+# Create the needed user and chown all the files
+useradd stickers
+usermod -a -G lp stickers
+chown -R stickers:stickers /var/www/stickers
+
+# Copy the service conf
+cp systemd.service /etc/systemd/system/stickers.service
 
 # Tweak the absolute path or other parameters if needed:
-nano /etc/systemd/system/stickers.local.service
+nano /etc/systemd/system/stickers.service
 
 systemctl daemon-reload
-systemctl enable stickers.local --now
+systemctl enable stickers --now
 
 # Check is is indeed running with
-systemctl status stickers.local
+systemctl status stickers
 ```
 
 ### `nginx`
 
 Having to type the local IP + port number is impractical for long term use. It's possible to tweak the flask/gunicorn command to listen to port 80, but this is not really a standard practice and there are other advantages in setting up a proper web server (possibly speed up the serving of static assets)
 
-TODO/FIXME : add nginx conf snippet
+```
+location / {
+    proxy_pass http://unix:/var/www/stickers.local/sock;
+}
+location /assets {
+    alias /var/www/stickers.local/assets/;
+}
+```
 
 ### access with a `.local` domain
 
 To simplify access even further, you can install `avahi-daemon` on the server, and configure it to broadcast `stickers.local` (or `whatever.local`). This is called Bonjour Protocol, or MDNS. Note that not every client supports it though (typically not all smartphones may resolve .local domains, and maybe not all laptops eithers)
+
+```
+# In /etc/avahi/avahi-daemon.conf
+[server]
+host-name=stickers
+```

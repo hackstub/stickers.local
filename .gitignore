@@ -11,3 +11,5 @@ __pycache__
 scripts/didder*
 *gitignore
 *.woff2
+access.log
+error.log
