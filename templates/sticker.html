@@ -1,10 +1,4 @@
-<sticker-image 
-    sticker="{{ sticker.relative }}"
-    hash="{{ sticker.blurhash }}"
-    src="{{ url_for('static', filename='uploads/' + sticker.relative) }}"
-    width="{{ sticker.width }}"
-    height="{{ sticker.height }}"
->
+<div width="{{ sticker.width }}" height="{{ sticker.height }}">
     <div class="relative flex flex-col text-center rounded-md h-full">
         <button
             class="rounded-md absolute bottom-0 left-0 bg-blue-500 text-white pt-0.5 p-0 h-7 w-7"
@@ -46,6 +40,6 @@
         >
             <i class="fa fa-pencil" aria-hidden="true"></i>
         </button>
-        <img id="sticker-image" class="grow max-h-64 object-contain">
+        <img class="grow max-h-64 object-contain" src="{{ url_for('static', filename='uploads/' + sticker.relative) }}" width="{{ sticker.width }}" height="{{ sticker.height }}" loading="lazy">
     </div>
-</sticker-image>
+</div>

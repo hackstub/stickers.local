@@ -8,7 +8,6 @@ from io import BytesIO
 from slugify import slugify
 import numpy as np
 
-import blurhash
 from PIL import Image, ImageEnhance, ImageDraw, ImageFont
 from flask import Flask, request, redirect, render_template, jsonify
 from werkzeug.utils import secure_filename
@@ -21,7 +20,6 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 
 class Sticker:
     path: str | os.PathLike
-    blurhash: str
     width: int
     height: int
 
@@ -34,10 +32,10 @@ class Sticker:
         except ValueError:
             self.relative = str(self.path)
 
-        self.width, self.height, self.blurhash = get_sticker_meta(self.path)
+        self.width, self.height = get_sticker_meta(self.path)
 
     def __repr__(self):
-        return f"path: <{self.path}> size:<{self.width}x{self.height}> hash:<{self.blurhash}>"
+        return f"path: <{self.path}> size:<{self.width}x{self.height}>"
 
 
 app = Flask(__name__, static_url_path="/assets", static_folder="assets")
@@ -385,14 +383,11 @@ def label_generate():
 
 
 @cache(name="sticker_meta", dir=".cache")
-def get_sticker_meta(file_path: str | os.PathLike) -> tuple[int, int, str]:
-    """Return (width, height, blurhash) of the image"""
+def get_sticker_meta(file_path: str | os.PathLike) -> tuple[int, int]:
+    """Return (width, height) of the image"""
     with Image.open(file_path) as im:
         width, height = im.size
-        im.thumbnail((32, 32))
-        bh = blurhash.encode(im, x_components=4, y_components=3)
-
-    return (width, height, bh)
+    return (width, height)
 
 
 def text_to_image(
