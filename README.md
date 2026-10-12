@@ -1,5 +1,7 @@
 # `stickers.local`
 
+<p align="center"><img src="assets/logo.png" width="500px" /></p>
+
 This is a web app to manage a collection of stickers and print them using a Brother QL thermal label printer
 
 - It relies on [the `brother_ql` python lib](https://github.com/pklaus/brother_ql)
