@@ -3,18 +3,26 @@
     
     <img alt="stickers.local" class="px-5 mt-10 mb-2 mx-auto max-h-40 object-contain" src="{{ url_for('static', filename='logo.png') }}">
   
-    <div class="px-2 mb-8 text-gray-700 text-center">
-        <label for="search" class="sr-only">Rechercher</label>
-        <input
-            type="text"
-            id="search"
-            placeholder="Rechercher"
-            spellcheck="false"
-            {% if request.args.get("q") %}value="{{ request.args.get("q") }}"{% endif %}
-            class="w-72 text-sm text-center"
-            style="background:none; outline: none !important; border: none !important; box-shadow: none !important;"
-        >
-    </div>
+    <form
+      class="px-2 mb-8 text-gray-700 text-center"
+      hx-get="{{ url_for('search') }}"
+      hx-trigger="submit"
+      hx-target="main"
+      hx-select="main"
+      hx-swap="outerHTML"
+      hx-push-url="true"
+    >
+      <label for="q" class="sr-only">Rechercher</label>
+      <input
+          type="search"
+          name="q"
+          placeholder="Rechercher"
+          spellcheck="false"
+          {% if request.args.get("q") %}value="{{ request.args.get("q") }}"{% endif %}
+          class="w-72 text-sm text-center"
+          style="background:none; outline: none !important; border: none !important; box-shadow: none !important;"
+      >
+    </form>
 
     {% if not printer_is_online %}
     <div class="text-center text-red-500 font-bold text-xl pb-5">
@@ -85,7 +93,7 @@
       </div>
       <div class="text-center w-1/2 ps-5">
         <h2 class="text-2xl">Faire une étiquette</h2>
-        <form 
+        <form
             hx-get="{{ url_for('label_generate') }}"
             hx-trigger="input change delay:100ms"
             hx-swap="none"

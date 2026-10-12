@@ -10,11 +10,6 @@
     <script src="{{ url_for('static', filename='tailwind-css.js') }}"></script>
     <script src="{{ url_for('static', filename='htmx.min.js') }}"></script>
     <script>
-        window.STICKER_PRINT_URL = "{{ url_for('sticker_print') }}";
-        window.STICKER_DELETE_URL = "{{ url_for('sticker_delete') }}";
-        window.STICKER_SEARCH_URL = "{{ url_for('search') }}";
-        window.STICKER_PROCESS_URL = "{{ url_for('sticker_process') }}";
-        window.LABEL_GENERATE_URL = "{{ url_for('label_generate') }}";
         function resetAndOpenModal() {
             const modal = document.getElementById('modal');
             modal.innerHTML = 'Chargement...';
@@ -25,7 +20,6 @@
             modal.close();
         }
     </script>
-    <script type="module" src="{{ url_for('static', filename='app.js') }}"></script>
 
   <style type="text/tailwindcss">
         @layer utilities {

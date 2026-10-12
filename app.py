@@ -244,6 +244,7 @@ def search():
         stickers=sticker_objects,
         is_root_collection=False,
         printer_is_online=os.path.exists(PRINTER),
+        fonts=fonts,
     )
 
 
