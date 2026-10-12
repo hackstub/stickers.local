@@ -1,0 +1,51 @@
+<sticker-image 
+    sticker="{{ sticker.relative }}"
+    hash="{{ sticker.blurhash }}"
+    src="{{ url_for('static', filename='uploads/' + sticker.relative) }}"
+    width="{{ sticker.width }}"
+    height="{{ sticker.height }}"
+>
+    <div class="relative flex flex-col text-center rounded-md h-full">
+        <button
+            class="rounded-md absolute bottom-0 left-0 bg-blue-500 text-white pt-0.5 p-0 h-7 w-7"
+            title="Imprimer"
+            aria-label="Imprimer"
+            hx-post="{{ url_for('sticker_print', sticker=sticker.relative) }}"
+            hx-swap="none"
+        >
+            <i class="fa fa-print" aria-hidden="true"></i>
+        </button>
+        <button
+            class="rounded-md absolute top-0 right-0 text-red-400 text-xs p-0 h-4 w-4"
+            title="Supprimer"
+            aria-label="Supprimer"
+            hx-confirm="T'es sûr·e ?!"
+            hx-delete="{{ url_for('sticker_delete', sticker=sticker.relative) }}"
+            hx-target="closest sticker-image"
+            hx-swap="delete"
+        >
+            <i class="fa fa-times" aria-hidden="true"></i>
+        </button>
+        <button
+            class="rounded-md absolute bottom-0 right-6 border bg-white border-purple-500 text-purple-500 p-0 h-5 w-5 text-sm"
+            title="Impression en masse"
+            aria-label="Impression en masse"
+            hx-on::before:request="resetAndOpenModal()"
+            hx-get="{{ url_for('sticker_massprint', sticker=sticker.relative) }}"
+            hx-target="#modal"
+        >
+            <i class="fa fa-print" aria-hidden="true"></i>
+        </button>
+        <button 
+            class="rounded-md absolute bottom-0 right-0 border bg-white border-blue-500 text-blue-500 p-0 h-5 w-5 text-sm"
+            title="Éditer"
+            aria-label="Éditer"
+            hx-on::before:request="resetAndOpenModal()"
+            hx-get="{{ url_for('sticker_edit', sticker=sticker.relative) }}"
+            hx-target="#modal"
+        >
+            <i class="fa fa-pencil" aria-hidden="true"></i>
+        </button>
+        <img id="sticker-image" class="grow max-h-64 object-contain">
+    </div>
+</sticker-image>

@@ -10,7 +10,7 @@ import numpy as np
 
 import blurhash
 from PIL import Image, ImageEnhance, ImageDraw, ImageFont
-from flask import Flask, request, redirect, url_for, render_template, jsonify
+from flask import Flask, request, redirect, render_template, jsonify
 from werkzeug.utils import secure_filename
 from persist_cache import cache
 
@@ -106,42 +106,47 @@ def sticker_upload():
     file = request.files['file']
     # If the user does not select a file, the browser submits an
     # empty file without a filename.
-    if file.filename == '':
-        print("No selected file")
-        return redirect(request.url)
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        path = os.path.join(collection_path, filename)
-        if os.path.exists(path):
-            return "Il existe déjà un fichier avec ce nom"
-        file.save(path)
+    if not file or not file.filename.strip():
+        return "Pas de fichier sélectionné !?", 499
+    if not allowed_file(file.filename):
+        return "Ohno, cette extension n'est pas autorisée!", 499
 
-        return redirect(url_for('home', collection=collection or None))
-    else:
-        return "Ohno, le fichier n'est pas ok!"
+    filename = secure_filename(file.filename)
+    path = os.path.join(collection_path, filename)
+    if os.path.exists(path):
+        return "Il existe déjà un fichier avec ce nom", 499
+    file.save(path)
+
+    return render_template(
+        "sticker.html",
+        sticker=Sticker(path)
+    )
 
 
 @app.route('/stickers/print', methods=['POST'])
 def sticker_print():
 
     if not os.path.exists(PRINTER):
-        return jsonify(success=False)
+        return "Erreur: l'imprimante est hors ligne / inaccessible !", 400
 
-    name = request.args.get("sticker")
-    quantity = request.args.get("quantity", 1)
-    quantity = int(quantity)
-    size = request.args.get("size", "default")
-    dithering = request.args.get("dithering", "true")
+    try:
+        name = request.args.get("sticker")
+        quantity = request.args.get("quantity", type=int) or 1
+        size = request.args.get("size", "default")
+        dithering = request.args.get("dithering", "true")
 
-    assert quantity > 0 and quantity < 500
-    assert size in ["default", "large", "small"]
-    assert dithering in ["true", "false"]
+        assert quantity > 0 and quantity < 500, f"La quantité '{quantity}' est incorrecte"
+        assert size in ["default", "large", "small"], f"La taille '{size}' est incorrecte"
+        assert dithering in ["true", "false"], f"'dithering' devrait être 'true' ou 'false, pas '{dithering}'"
 
-    assert name and ".." not in name and "'" not in name and ";" not in name
-    path = app.config['UPLOAD_FOLDER'] + "/" + name
-    assert Path(path).exists()
+        assert name and ".." not in name and "'" not in name and ";" not in name, f'Caractère interdits dans le nom du sticker'
+        path = app.config['UPLOAD_FOLDER'] + "/" + name
+        assert Path(path).exists(), f"Le fichier '{name}' n'existe pas ?"
+    except Exception as e:
+        return f"Erreur: {e}", 400
+
     ret = os.system(f"SIZE={size} DITHERING={dithering} QUANTITY={quantity} bash scripts/print.sh '{path}'")
-    return jsonify(success=ret == 0)
+    return "" if ret == 0 else ("Ohno ! L'impression a échoué ! Il faut regarder les logs !", 400)
 
 
 @app.route('/stickers/<collection>/<subcol>/<subsubcol>/print_all', methods=['GET', 'POST'])
@@ -183,7 +188,7 @@ def sticker_delete():
     path = app.config['UPLOAD_FOLDER'] + "/" + name
     assert Path(path).exists()
     os.unlink(path)
-    return '', 204
+    return ""
 
 
 @app.route('/stickers/search')
@@ -210,14 +215,31 @@ def search():
     )
 
 
+@app.route('/stickers/massprint')
+def sticker_massprint():
+    return render_template("massprint.html", sticker=request.args.get('sticker'))
+
+
+@app.route('/stickers/edit')
+def sticker_edit(sticker=None):
+    return render_template("edit.html", sticker=request.args.get('sticker'))
+
+
 @app.route('/stickers/process', methods=['GET', 'POST'])
 def sticker_process():
 
-    name = request.args.get("sticker")
-    decolor = float(request.args.get("decolor"))
-    brightness = float(request.args.get("brightness"))
-    contrast = float(request.args.get("contrast"))
-    brightness2 = float(request.args.get("brightness2"))
+    if request.method == 'POST':
+        name = request.form.get("sticker")
+        decolor = request.form.get("decolor", type=float)
+        brightness = request.form.get("brightness", type=float)
+        contrast = request.form.get("contrast", type=float)
+        brightness2 = request.form.get("brightness2", type=float)
+    else:
+        name = request.args.get("sticker")
+        decolor = request.args.get("decolor", type=float)
+        brightness = request.args.get("brightness", type=float)
+        contrast = request.args.get("contrast", type=float)
+        brightness2 = request.args.get("brightness2", type=float)
 
     assert decolor >= 0 and decolor <= 2
     assert brightness >= 0 and brightness <= 5
@@ -229,7 +251,6 @@ def sticker_process():
 
     with Image.open(path) as im:
         if im.mode != 'L':
-            #im = im.convert('L')
             im = _decolor_image(im, strength=decolor)
 
         im = ImageEnhance.Brightness(im).enhance(brightness)
@@ -239,13 +260,18 @@ def sticker_process():
         if request.method == 'POST':
             path_without_ext, ext = path.rsplit(".", 1)
             new_name = f"{path_without_ext}_bw{decolor}_b{brightness}c{contrast}b2{brightness2}.{ext}"
-            im.save(new_name, format=ext.upper())
-            return ""
+            pil_format = ext.upper()
+            if pil_format == "JPG":
+                pil_format = "JPEG"
+            im.save(new_name, format=pil_format)
+            return render_template(
+                "sticker.html",
+                sticker=Sticker(new_name)
+            )
         else:
             buffer = BytesIO()
             im.save(buffer, format="JPEG")
-            img_base64 = "data:image/jpeg;base64," + base64.b64encode(buffer.getvalue()).decode()
-            return img_base64
+            return base64.b64encode(buffer.getvalue()).decode()
 
 
 def _decolor_image(img, strength=1.0, power=2.0):
@@ -296,7 +322,7 @@ def label_generate():
 
     if request.method == 'POST':
 
-        action = request.values.get('label-generator-action')
+        action = request.values.get('action')
         assert action in ["print", "save"]
         print_size = request.values.get('print-label-size')
         assert print_size in ["small", "large"]
@@ -309,16 +335,18 @@ def label_generate():
             dithering = "true"
             quantity = 1
             ret = os.system(f"SIZE={print_size} DITHERING={dithering} QUANTITY={quantity} bash scripts/print.sh '{path}'")
-            return redirect(url_for('home', collection=None))
+            return "" if ret == 0 else ("Uhoh, l'impression échoué ?!", 500)
         else:
             path = f"assets/uploads/{slug}.png"
             img.save(path, format="PNG")
-            return redirect(url_for('home', collection=None))
+            return render_template(
+                "sticker.html",
+                sticker=Sticker(path)
+            )
     else:
         buffer = BytesIO()
         img.save(buffer, format="PNG")
-        img_base64 = "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode()
-        return img_base64
+        return base64.b64encode(buffer.getvalue()).decode()
 
 
 @cache(name="sticker_meta", dir=".cache")

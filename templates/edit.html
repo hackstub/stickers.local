@@ -1,0 +1,47 @@
+<h2 class="font-bold text-xl pb-3">Traitement d'image</h2>
+<h3 class="text-sm text-grey-500">{{ sticker }}</h3>
+<form
+   hx-trigger="load, input throttle:150ms"
+   hx-get="{{ url_for('sticker_process') }}"
+   hx-swap="none"
+   hx-on::after:request="
+      // For some reason we need this trick rather than a regular hx-swap
+      // to prevent image flickering when replacing/updating the preview
+      if (ctx.response.status == 200) {
+          const img = document.getElementById('processed-image-preview');
+          const src = 'data:image/png;base64,' + ctx.text.trim();
+          const next = new Image();
+          next.onload = () => img.src = src;
+          next.src = src;
+      }
+   "
+>
+    <input name="sticker" type="hidden" value="{{ sticker }}">
+    <div class="pb-1">
+        <label for="decolor">Décolorisation</label>
+        <input name="decolor" class="w-full cursor-pointer" type="range" min="0" max="2" step="0.02" value="0.7" />
+    </div>
+    <div class="pb-1">
+        <label for="brightess">Luminosité</label>
+        <input name="brightness" class="w-full cursor-pointer" type="range" min="0" max="3" step="0.02" value="1" />
+    </div>
+    <div class="pb-1">
+        <label for="contrast">Contraste</label>
+        <input name="contrast" class="w-full cursor-pointer" type="range" min="0" max="3" step="0.02" value="1" />
+    </div>
+    <div class="pb-1">
+        <label for="brightess2">Luminosité 2</label>
+        <input name="brightness2" class="w-full cursor-pointer" type="range" min="0" max="3" step="0.02" value="1" />
+    </div>
+    <img id="processed-image-preview">
+    <button
+        type="submit"
+        class="rounded-md bg-blue-500 mt-2 py-2 px-4 border border-transparent text-center text-sm text-white shadow-md ml-2"
+        hx-post="{{ url_for('sticker_process') }}"
+        hx-target="#stickers-list"
+        hx-swap="afterbegin show:top showTarget:#stickers-list transition:true"
+        hx-on::after:request="closeModal()"
+    >
+      <i class="fa fa-download" aria-hidden="true"></i> Sauvegarder comme nouvelle image
+    </button>
+</form>

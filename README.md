@@ -3,7 +3,7 @@
 This is a web app to manage a collection of stickers and print them using a Brother QL thermal label printer
 
 - It relies on [the `brother_ql` python lib](https://github.com/pklaus/brother_ql)
-- The web front is built using [Flask](https://flask.palletsprojects.com/en/stable/), [Tailwind CSS](https://tailwindcss.com/)
+- The web front is built using [Flask](https://flask.palletsprojects.com/en/stable/), [Tailwind CSS](https://tailwindcss.com/) and [HTMX](https://four.htmx.org/)
 - Processing the image before printing is done with [Pillow](https://pypi.org/project/pillow/) (color/contrast manipulation, label generation), [Imagemagick](https://imagemagick.org/) (resize) and [Didder](https://github.com/makew0rld/didder) (dithering)
 
 ## Setup

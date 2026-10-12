@@ -3,6 +3,7 @@ assets/uploads*
 assets/fonts
 assets/fork*
 assets/tailwind*
+assets/htmx.min.js
 venv
 __pycache__
 .cache

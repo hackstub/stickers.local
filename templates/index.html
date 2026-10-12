@@ -38,78 +38,111 @@
     {% endfor %}
     </div>
 
-    <div class="grid px-5 sm:px-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 sm:gap-2 pb-10">
+    <div id="stickers-list" class="grid px-5 sm:px-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 sm:gap-2 pb-10">
     {% for sticker in stickers %}
-        <sticker-image sticker="{{ sticker.relative }}" hash="{{ sticker.blurhash }}"
-        src="{{ url_for('static', filename='uploads/' + sticker.relative) }}" width="{{ sticker.width }}" height="{{ sticker.height }}">
-            <div class="relative flex flex-col text-center rounded-md h-full">
-                <button class="rounded-md absolute bottom-0 left-0 bg-blue-500 text-white pt-0.5 p-0 h-7 w-7 print" aria-label="Imprimer" title="Imprimer" >
-                    <i class="fa fa-print" aria-hidden="true"></i>
-                </button>
-                <button class="rounded-md absolute top-0 right-0 text-red-400 text-xs p-0 h-4 w-4 delete" aria-label="Supprimer" title="Supprimer">
-                    <i class="fa fa-times" aria-hidden="true"></i>
-                </button>
-                <button class="rounded-md absolute bottom-0 right-6 border bg-white border-purple-500 text-purple-500 p-0 h-5 w-5 text-sm advanced-print" aria-label="Impression avancée" title="Impression avancée">
-                    <i class="fa fa-print" aria-hidden="true"></i>
-                </button>
-                <button class="rounded-md absolute bottom-0 right-0 border bg-white border-blue-500 text-blue-500 p-0 h-5 w-5 text-sm process-image" aria-label="Éditer" title="Éditer">
-                    <i class="fa fa-pencil" aria-hidden="true"></i>
-                </button>
-                <img id="sticker-image" class="grow max-h-64 object-contain">
-            </div>
-        </sticker-image>
+        {% with sticker=sticker %}
+            {% include "sticker.html" %}
+        {% endwith %}
     {% endfor %}
     </div>
         
     <hr class="pb-10"/>
 
     <div class="flex flex-row justify-between px-12">
-        <div class="text-center w-1/2 pe-5">
-            <h2>Ajouter un sticker</h2>
-            <form action="{{ url_for('sticker_upload') }}" method="post" enctype="multipart/form-data">
-              <input hidden type="text" name="collection" value="{{ current_collection }}">
-              <div id="sticker-upload-input" class="mt-3">
-                  <label for="file" class="border border-gray-400 border-dashed rounded-md px-5 py-2 bg-white hover:bg-gray-100 transition"><i class="fa fa-search"></i> Choisir un fichier</label>
-                <input type="file" name="file" style="display: none;">
-              </div>
-              <br/>
-              <button class="btn !font-bold rotate-2 !text-lg" style="background-image: url({{ url_for('static', filename='button.svg')}}); background-position: center; background-repeat: no-repeat; background-size: cover; width: 11rem; height: 4.5rem; color: #00426a;" type="submit">
-                  Ajouter
+      <div class="text-center w-1/2 pe-5">
+        <h2>Ajouter un sticker</h2>
+        <form
+            hx-post="{{ url_for('sticker_upload') }}"
+            hx-encoding="multipart/form-data"
+            hx-target="#stickers-list"
+            hx-swap="afterbegin show:top showTarget:#stickers-list transition:true"
+            hx-status:4xx="target:#sticker-upload-error swap:innerHTML"
+            hx-status:5xx="target:#sticker-upload-error swap:innerHTML"
+        >
+          <input hidden type="text" name="collection" value="{{ current_collection }}">
+          <div id="sticker-upload-input" class="mt-3">
+              <label
+                  for="file"
+                  class="border border-gray-400 border-dashed rounded-md px-5 py-2 bg-white hover:bg-gray-100 transition"
+                  hx-on:click="document.querySelector('#sticker-upload-input input').click();"
+              >
+                  <i class="fa fa-search"></i>
+                  Choisir un fichier
+              </label>
+            <input 
+              hidden
+              type="file"
+              name="file"
+              hx-on:change="document.querySelector('#sticker-upload-input label').innerText = this.files[0]?.name ?? 'Choisir un fichier';"
+            >
+          </div>
+          <br/>
+          <button class="btn !font-bold rotate-2 !text-lg" style="background-image: url({{ url_for('static', filename='button.svg')}}); background-position: center; background-repeat: no-repeat; background-size: cover; width: 11rem; height: 4.5rem; color: #00426a;" type="submit">
+              Ajouter
+          </button>
+          <div id="sticker-upload-error" class="text-red-500 pt-4 font-bold"></div>
+        </form>
+      </div>
+      <div class="text-center w-1/2 ps-5">
+        <h2 class="text-2xl">Faire une étiquette</h2>
+        <form 
+            hx-get="{{ url_for('label_generate') }}"
+            hx-trigger="input change delay:100ms"
+            hx-swap="none"
+            hx-on::after:request="
+               // For some reason we need this trick rather than a regular hx-swap
+               // to prevent image flickering when replacing/updating the preview
+               if (ctx.response.status == 200) {
+                   const img = document.getElementById('label-generator-preview');
+                   const src = 'data:image/png;base64,' + ctx.text.trim();
+                   const next = new Image();
+                   next.onload = () => img.src = src;
+                   next.src = src;
+               }
+            "
+        >
+          <textarea class="block mx-auto border border-dashed border-gray-400" name="text" rows="2" style="box-shadow: none !important;"></textarea>
+          <select class="mt-3" name="font">
+              {% for name, infos in fonts.items() %}
+              <option style="background-image: url('{{ infos['preview'] }}');" value="{{ name }}" {% if name == 'Gotham Ultra' %}selected{% endif %}>{{ name }}</option>
+              {% endfor %}
+          </select>
+          <img class="py-5 mx-auto" id="label-generator-preview" style="max-width: 80%; "/>
+          <div class="flex">
+            <div class="w-1/2">
+              <button 
+                 class="btn block !font-bold -rotate-3 me-3 !text-lg" 
+                 style="background-image: url({{ url_for('static', filename='button2.svg')}}); background-position: center; background-repeat: no-repeat; background-size: cover; width: 11.5rem; height: 4.5rem; color: #156000;" 
+                 type="submit" 
+                 hx-post="{{ url_for('label_generate', action='print') }}"
+                 hx-swap="none"
+              >
+                  Imprimer
               </button>
-            </form>
-        </div>
-        <div class="text-center w-1/2 ps-5">
-            <h2 class="text-2xl">Faire une étiquette</h2>
-            <form action="{{ url_for('label_generate') }}" method="post" enctype="multipart/form-data">
-            <textarea id="label-generator-text" class="block mx-auto border border-dashed border-gray-400" name="text" rows="2" style="box-shadow: none !important;"></textarea>
-            <select id="label-generator-font" class="mt-3" name="font">
-                {% for name, infos in fonts.items() %}
-                <option style="background-image: url('{{ infos['preview'] }}');" value="{{ name }}" {% if name == 'Gotham Ultra' %}selected{% endif %}>{{ name }}</option>
-                {% endfor %}
-
-            </select>
-            <img class="py-5 mx-auto" id="label-generator-preview" style="max-width: 80%; "/>
-            <div class="flex">
-              <div class="w-1/2">
-                <button class="btn block !font-bold -rotate-3 me-3 !text-lg" style="background-image: url({{ url_for('static', filename='button2.svg')}}); background-position: center; background-repeat: no-repeat; background-size: cover; width: 11.5rem; height: 4.5rem; color: #156000;" type="submit" name="label-generator-action" value="print">
-                    Imprimer
-                </button>
-                <div>
-                  <input type="radio" name="print-label-size" class="custom-radio hidden" id="print-label-small" value="small" checked>
-                  <label for="print-label-small">Petit</label>
-                  <input type="radio" name="print-label-size" class="custom-radio hidden" id="print-label-large" value="large">
-                  <label for="print-label-large">Grand</label>
-                </div>
-              </div>
-              <div class="w-1/2">
-              <button class="btn !font-bold rotate-3 !text-lg" style="background-image: url({{ url_for('static', filename='button3.svg')}}); background-position: center; background-repeat: no-repeat; background-size: cover; width: 11rem; height: 4.5rem; color: #3b0051;" type="submit" name="label-generator-action" value="save">
-                  Sauvegarder
-              </button>
+              <div>
+                <input type="radio" name="print-label-size" class="custom-radio hidden" id="print-label-small" value="small" checked>
+                <label for="print-label-small" hx-on:click="document.getElementById('')">Petit</label>
+                <input type="radio" name="print-label-size" class="custom-radio hidden" id="print-label-large" value="large">
+                <label for="print-label-large">Grand</label>
               </div>
             </div>
-            </form>
+            <div class="w-1/2">
+            <button
+                class="btn !font-bold rotate-3 !text-lg"
+                style="background-image: url({{ url_for('static', filename='button3.svg')}}); background-position: center; background-repeat: no-repeat; background-size: cover; width: 11rem; height: 4.5rem; color: #3b0051;"
+                type="submit"
+                hx-post="{{ url_for('label_generate', action='save') }}"
+                hx-target="#stickers-list"
+                hx-swap="afterbegin show:top showTarget:#stickers-list transition:true"
+            >
+                Sauvegarder
+            </button>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
-
+    <!--
     <div id="toast" class="modal hidden">
       <div
         class="relative m-4 p-4 w-96 rounded-xl shadow-sm text-center text-red-500 font-bold"
@@ -119,77 +152,5 @@
         <span id="toast-error"></span>
       </div>
     </div>
-
-    <div id="modal-advanced-print" class="modal hidden">
-      <div
-        class="relative m-4 p-4 w-72 rounded-xl shadow-sm text-center text-gray-800"
-        style="background-color: #fdfce3;"
-      >
-        <div class="pb-3 flex">
-          <span class="flex-grow font-bold text-xl">Impression avancée</span>
-        </div>
-        <div>
-            <div class="pb-3">
-                <span id="modal-advanced-print-sticker" class="text-sm text-grey-500"></span>
-            </div>
-            <div class="pb-3">
-                <label for="print_type">Taille</label>
-                <select id="modal-print-size" name="print_type">
-                    <option value="small">Petit</option>
-                    <option value="large">Grand</option>
-                </select>
-            </div>
-            <div class="pb-3">
-                <label for="quantity">Quantité</label>
-                <input id="modal-print-quantity" type="number" name="quantity" min="1" max="1000" value="1" class="border-0 rounded-md" />
-            </div>
-            <div>
-              <button id="modal-advanced-print-button"
-                      class="rounded-md bg-blue-500 py-2 px-4 border border-transparent text-center text-sm text-white shadow-md ml-2"
-                      >
-                <i class="fa fa-print" aria-hidden="true"></i> Go
-              </button>
-            </div>
-            <div id="modal-advanced-print-error" class="text-red-500 pt-4 font-bold">
-            </div>
-        </div>
-      </div>
-    </div>
-
-    <div id="modal-processing" class="modal hidden">
-      <div
-        class="relative m-4 p-4 w-72 rounded-xl shadow-sm text-center text-gray-800"
-        style="background-color: #fdfce3;"
-      >
-        <div class="pb-3 flex">
-          <span class="flex-grow font-bold text-xl">Traitement d'image</span>
-        </div>
-        <div>
-            <span id="modal-processing-sticker" class="text-sm text-grey-500"></span>
-            <div class="pb-1">
-                <label for="decolor">Décolorisation</label>
-                <input name="decolor" class="w-full cursor-pointer" type="range" min="0" max="2" step="0.02" value="0" />
-            </div>
-            <div class="pb-1">
-                <label for="brightess">Luminosité</label>
-                <input name="brightness" class="w-full cursor-pointer" type="range" min="0" max="3" step="0.02" value="1" />
-            </div>
-            <div class="pb-1">
-                <label for="contrast">Contraste</label>
-                <input name="contrast" class="w-full cursor-pointer" type="range" min="0" max="3" step="0.02" value="1" />
-            </div>
-            <div class="pb-1">
-                <label for="brightess2">Luminosité 2</label>
-                <input name="brightness2" class="w-full cursor-pointer" type="range" min="0" max="3" step="0.02" value="1" />
-            </div>
-            <img id="processed_image" />
-            <button id="modal-processing-button"
-                    class="rounded-md bg-blue-500 mt-2 py-2 px-4 border border-transparent text-center text-sm text-white shadow-md ml-2"
-                    >
-              <i class="fa fa-download" aria-hidden="true"></i> Sauvegarder comme nouvelle image
-            </button>
-        </div>
-      </div>
-    </div>
-
+    -->
 {% endblock %}
