@@ -1,13 +1,15 @@
+import re
 import sys
 import subprocess
 import os
 import base64
+from pathlib import Path
 from dotenv import load_dotenv
 from pathlib import Path
 from io import BytesIO
 from slugify import slugify
 import numpy as np
-
+from markupsafe import Markup
 from PIL import Image, ImageEnhance, ImageDraw, ImageFont
 from flask import Flask, request, redirect, render_template, jsonify
 from werkzeug.utils import secure_filename
@@ -451,3 +453,32 @@ def list_fonts():
 
 
 fonts = list_fonts()
+
+def icon(name, attrs={"aria-hidden": "true"}, size="1.25em", classes=[]):
+    if not re.fullmatch(r"[a-z:-]+", name):
+        raise ValueError(f"Invalid icon name: {name}")
+
+    path = Path(app.static_folder) / "icons" / f"{name}.svg"
+
+    assert os.path.exists(path), f"Icon {path} doesn't exist, maybe you need to re-fetch assets"
+
+    attrs["class"] = ' '.join(["icon"] + classes)
+    attrs = ' '.join([f'{k}="{v}"' for k, v in attrs.items()])
+
+    svg = path.read_text(encoding="utf-8")
+    svg = re.sub(
+        r'width="1em" height="1em"',
+        f'width="{size}" height="{size}"',
+        svg,
+        count=1
+    )
+    svg = re.sub(
+        r"<svg(?=[\s>])",
+        "<svg " + attrs,
+        svg,
+        count=1,
+    )
+
+    return Markup(svg)
+
+app.jinja_env.globals["icon"] = icon

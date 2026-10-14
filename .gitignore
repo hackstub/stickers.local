@@ -4,6 +4,7 @@ assets/fonts
 assets/fork*
 assets/tailwind*
 assets/htmx.min.js
+assets/icons
 venv
 __pycache__
 .cache

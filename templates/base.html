@@ -5,7 +5,6 @@
     <title>stickers.local</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='fork-awesome.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='shantell.css') }}">
     <script src="{{ url_for('static', filename='tailwind-css.js') }}"></script>
     <script src="{{ url_for('static', filename='htmx.min.js') }}"></script>
@@ -37,6 +36,7 @@
       body {
           font-family: "Shantell Sans", ui-sans-serif, system-ui, sans-serif;
           font-weight: 500;
+          background-color: #fdfce3;
       }
       input[type="radio"].custom-radio + label {
           background-color: none;
@@ -47,10 +47,13 @@
           background-color: #ddd;
           font-weight: bold;
       }
+      .icon {
+          display: inline;
+      }
     </style>
   </head>
 
-  <body class="text-gray-700 w-fit sm:w-full" style="background-color: #fdfce3;">
+  <body class="text-gray-700 w-fit sm:w-full">
 
       <main class="mx-auto px-3 max-w-screen-md md:max-w-screen-lg pt-5">
         {% block main %}
@@ -64,7 +67,9 @@
 
       <footer class="h-5 my-5 text-center">
         <p>
-           Made with <i class='text-red-500 fa fa-heart-o' aria-label='love'></i> using
+           Made with
+           {{ icon('ph:heart-bold', classes=["text-red-500", "mb-1"], attrs={"aria-label": "love"}) }}
+           using
            <a class='text-blue-800 dark:text-blue-400' href='https://flask.palletsprojects.com'>Flask</a>,
            <a class='text-blue-800 dark:text-blue-400' href='https://tailwindcss.com/'>TailwindCSS</a>
            and <a class='text-blue-800 dark:text-blue-400' href='https://four.htmx.org/'>HTMX</a>
