@@ -10,58 +10,44 @@
     <script src="{{ url_for('static', filename='tailwind-css.js') }}"></script>
     <script src="{{ url_for('static', filename='htmx.min.js') }}"></script>
     <script>
-        function resetAndOpenModal() {
-            const modal = document.getElementById('modal');
-            modal.innerHTML = 'Chargement...';
-            modal.showModal();
-        }
-        function closeModal() {
-            const modal = document.getElementById('modal');
-            modal.close();
-        }
+      function resetAndOpenModal() {
+          const modal = document.getElementById('modal');
+          modal.innerHTML = 'Chargement...';
+          modal.showModal();
+      }
+      function closeModal() {
+          const modal = document.getElementById('modal');
+          modal.close();
+      }
     </script>
-
-  <style type="text/tailwindcss">
-        @layer utilities {
-          input, textarea, select {
-              @apply rounded-md shadow-sm border-gray-200 bg-neutral-50;
-          }
-          .btn {
-              @apply text-sm font-medium rounded-md px-4 py-2 transition hover:brightness-125;
-          }
-          .btn-sm {
-              @apply text-xs font-medium rounded-md px-2 py-2 transition;
-          }
-          .btn-success {
-              @apply text-white bg-green-500 hover:bg-green-700;
-          }
-          .btn-primary {
-              @apply text-white bg-blue-500 hover:bg-blue-700;
-          }
-          h2 {
-              @apply text-2xl font-bold pb-2;
-          }
-          .modal {
-              @apply fixed inset-0 z-[999] h-screen w-screen place-items-center bg-black bg-opacity-30 backdrop-blur-sm transition transition-opacity duration-300
-          }
+    <style type="text/tailwindcss">
+      @layer utilities {
+        input, textarea, select {
+            @apply rounded-md shadow-sm border-gray-200 bg-neutral-50;
         }
-  </style>
-  <style>
-    body {
-        font-family: "Shantell Sans", ui-sans-serif, system-ui, sans-serif;
-        font-weight: 500;
-    }
-    input[type="radio"].custom-radio + label {
-
-        background-color: none;
-        padding: 2px 7px;
-        border-radius: 5px;
-    }
-    input[type="radio"].custom-radio:checked + label {
-        background-color: #ddd;
-        font-weight: bold;
-    }
-  </style>
+        .btn {
+            @apply text-sm font-medium rounded-md px-4 py-2 transition hover:brightness-125;
+        }
+        h2 {
+            @apply text-2xl font-bold pb-2;
+        }
+      }
+    </style>
+    <style>
+      body {
+          font-family: "Shantell Sans", ui-sans-serif, system-ui, sans-serif;
+          font-weight: 500;
+      }
+      input[type="radio"].custom-radio + label {
+          background-color: none;
+          padding: 2px 7px;
+          border-radius: 5px;
+      }
+      input[type="radio"].custom-radio:checked + label {
+          background-color: #ddd;
+          font-weight: bold;
+      }
+    </style>
   </head>
 
   <body class="text-gray-700 w-fit sm:w-full" style="background-color: #fdfce3;">
@@ -73,9 +59,17 @@
 
       <dialog id="modal" class="m-auto p-4 w-72 backdrop:bg-gray-900/25 rounded-xl text-center" style="background-color: #fdfce3;">
       </dialog>
+
+      <hr class="mx-auto my-5 max-w-screen-md md:max-w-screen-lg"/>
+
       <footer class="h-5 my-5 text-center">
         <p>
-           Made with <i class='text-red-500 fa fa-heart-o' aria-label='love'></i> using <a class='text-blue-800 dark:text-blue-400' href='https://flask.palletsprojects.com'>Flask</a> and <a class='text-blue-800 dark:text-blue-400' href='https://tailwindcss.com/'>TailwindCSS</a>
+           Made with <i class='text-red-500 fa fa-heart-o' aria-label='love'></i> using
+           <a class='text-blue-800 dark:text-blue-400' href='https://flask.palletsprojects.com'>Flask</a>,
+           <a class='text-blue-800 dark:text-blue-400' href='https://tailwindcss.com/'>TailwindCSS</a>
+           and <a class='text-blue-800 dark:text-blue-400' href='https://four.htmx.org/'>HTMX</a>
+           ·
+           <a class='text-blue-800 dark:text-blue-400' href='https://github.com/hackstub/stickers.local'>Source</a>
         </p>
       </footer>
 
