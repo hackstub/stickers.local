@@ -386,9 +386,14 @@ def label_generate():
 @cache(name="sticker_meta", dir=".cache")
 def get_sticker_meta(file_path: str | os.PathLike) -> tuple[int, int]:
     """Return (width, height) of the image"""
-    with Image.open(file_path) as im:
-        width, height = im.size
-    return (width, height)
+    try:
+        with Image.open(file_path) as im:
+            width, height = im.size
+    except Exception as e:
+        print(f"Failed to check image size for {file_path}: {e}")
+        return (0, 0)
+    else:
+        return (width, height)
 
 
 def text_to_image(
