@@ -19,7 +19,7 @@ cd scripts
 (cd assets && bash fetch_assets)
 ```
 
-Download the appropriate executable of [didder](https://github.com/makew0rld/didder/releases/tag/v1.3.0) in `scripts/`
+Download the appropriate executable of [didder](https://github.com/makew0rld/didder/releases/tag/v1.3.0) in `assets/`
 
 **IMPORTANT** : to be able to access the printer, your user needs to be in the `lp` group : `usermod -a -G lp $USER`. This requires to restart your unix session for this to be fully propagated. The simplest way is typically to reboot the entire computer.
 

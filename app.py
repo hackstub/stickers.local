@@ -3,9 +3,10 @@ import sys
 import subprocess
 import os
 import base64
+import time
+from tempfile import TemporaryDirectory
 from pathlib import Path
 from dotenv import load_dotenv
-from pathlib import Path
 from io import BytesIO
 from slugify import slugify
 import numpy as np
@@ -16,7 +17,14 @@ from werkzeug.utils import secure_filename
 from persist_cache import cache
 
 load_dotenv()
-PRINTER = os.getenv("PRINTER") or "/dev/usb/lp0"
+PRINTER = os.getenv("PRINTER", "/dev/usb/lp0")
+PRINTER_MODEL = os.getenv("PRINTER_MODEL", "QL-570")
+USE_QUEUE = os.getenv("USE_QUEUE", "false")
+DEFAULT_PRINT_SIZE = os.getenv("DEFAULT_PRINT_SIZE", "large")
+LABEL = os.getenv("LABEL", "62")
+LABEL_IDEAL_PIXEL_SIZE = os.getenv("LABEL_IDEAL_PIXEL_SIZE", "696")
+DIDDER_BIN = os.getenv("DIDDER_BIN", "assets/didder_1.3.0_linux_64-bit")
+
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 
 
@@ -133,14 +141,13 @@ def sticker_upload():
 @app.route("/stickers/print", methods=["POST"])
 def sticker_print():
 
-    if not os.path.exists(PRINTER):
+    if PRINTER != "dummy" and not os.path.exists(PRINTER):
         return "Erreur: l'imprimante est hors ligne / inaccessible !", 400
 
     try:
         name = request.args.get("sticker")
         quantity = request.form.get("quantity", 1, type=int)
         size = request.form.get("size", "default")
-        dithering = request.form.get("dithering", "true")
 
         assert (
             quantity > 0 and quantity < 500
@@ -150,65 +157,58 @@ def sticker_print():
             "large",
             "small",
         ], f"La taille '{size}' est incorrecte"
-        assert dithering in [
-            "true",
-            "false",
-        ], f"'dithering' devrait être 'true' ou 'false, pas '{dithering}'"
-
         assert (
             name and ".." not in name and "'" not in name and ";" not in name
-        ), f"Caractère interdits dans le nom du sticker"
+        ), "Caractère interdits dans le nom du sticker"
         path = app.config["UPLOAD_FOLDER"] + "/" + name
         assert Path(path).exists(), f"Le fichier '{name}' n'existe pas ?"
     except Exception as e:
         return f"Erreur: {e}", 400
 
-    ret = os.system(
-        f"SIZE={size} DITHERING={dithering} QUANTITY={quantity} bash scripts/print.sh '{path}'"
-    )
-    return (
-        ""
-        if ret == 0
-        else ("Ohno ! L'impression a échoué ! Il faut regarder les logs !", 400)
-    )
+    try:
+        return _sticker_print(path, size=size, quantity=quantity)
+    except Exception as e:
+        import traceback
+        return str(traceback.format_list(traceback.extract_stack())), 400
+        return "Ohno ! L'impression a échoué ! Il faut regarder les logs !", 400
 
 
-@app.route(
-    "/stickers/<collection>/<subcol>/<subsubcol>/print_all", methods=["GET", "POST"]
-)
-def sticker_print_all(collection=None, subcol=None, subsubcol=None):
-    if not collection:
-        collection = ""
-        folder = Path(app.config["UPLOAD_FOLDER"])
-    else:
-        if subcol:
-            collection += "/" + subcol
-        if subsubcol:
-            collection += "/" + subsubcol
-        assert (
-            ".." not in collection and "'" not in collection and ";" not in collection
-        )
-        folder = Path(app.config["UPLOAD_FOLDER"]) / collection
-
-    collections = sorted(
-        [collection + "/" + str(s.name) for s in folder.iterdir() if s.is_dir()]
-    )
-    collections = [c.strip("/") for c in collections]
-
-    stickers = [s for s in folder.iterdir() if s.is_file()]
-    stickers = sorted(stickers, key=lambda f: f.stat().st_mtime, reverse=True)
-    stickers = [collection + "/" + str(s.name) for s in stickers]
-
-    any_failed = False
-    for name in stickers:
-        assert name and ".." not in name and "'" not in name and ";" not in name
-        path = app.config["UPLOAD_FOLDER"] + "/" + name
-        assert Path(path).exists()
-        ret = os.system(f"bash scripts/print.sh '{path}'")
-        if ret != 0:
-            any_failed = True
-
-    return jsonify(success=any_failed is False)
+#@app.route(
+#    "/stickers/<collection>/<subcol>/<subsubcol>/print_all", methods=["GET", "POST"]
+#)
+#def sticker_print_all(collection=None, subcol=None, subsubcol=None):
+#    if not collection:
+#        collection = ""
+#        folder = Path(app.config["UPLOAD_FOLDER"])
+#    else:
+#        if subcol:
+#            collection += "/" + subcol
+#        if subsubcol:
+#            collection += "/" + subsubcol
+#        assert (
+#            ".." not in collection and "'" not in collection and ";" not in collection
+#        )
+#        folder = Path(app.config["UPLOAD_FOLDER"]) / collection
+#
+#    collections = sorted(
+#        [collection + "/" + str(s.name) for s in folder.iterdir() if s.is_dir()]
+#    )
+#    collections = [c.strip("/") for c in collections]
+#
+#    stickers = [s for s in folder.iterdir() if s.is_file()]
+#    stickers = sorted(stickers, key=lambda f: f.stat().st_mtime, reverse=True)
+#    stickers = [collection + "/" + str(s.name) for s in stickers]
+#
+#    any_failed = False
+#    for name in stickers:
+#        assert name and ".." not in name and "'" not in name and ";" not in name
+#        path = app.config["UPLOAD_FOLDER"] + "/" + name
+#        assert Path(path).exists()
+#        ret = os.system(f"bash scripts/print.sh '{path}'")
+#        if ret != 0:
+#            any_failed = True
+#
+#    return jsonify(success=any_failed is False)
 
 
 @app.route("/stickers/delete", methods=["DELETE"])
@@ -368,13 +368,11 @@ def label_generate():
         if action == "print":
             path = f"/tmp/{slug}.png"
             img.save(path, format="PNG")
-
-            dithering = "true"
-            quantity = 1
-            ret = os.system(
-                f"SIZE={print_size} DITHERING={dithering} QUANTITY={quantity} bash scripts/print.sh '{path}'"
-            )
-            return "" if ret == 0 else ("Uhoh, l'impression échoué ?!", 500)
+            try:
+                return _sticker_print(path, size=print_size, quantity=1)
+            except Exception as e:
+                print(e)
+                return "Ohno ! L'impression a échoué ! Il faut regarder les logs !", 400
         else:
             path = f"assets/uploads/{slug}.png"
             img.save(path, format="PNG")
@@ -454,6 +452,7 @@ def list_fonts():
 
 fonts = list_fonts()
 
+
 def icon(name, attrs={"aria-hidden": "true"}, size="1.25em", classes=[]):
     if not re.fullmatch(r"[a-z:-]+", name):
         raise ValueError(f"Invalid icon name: {name}")
@@ -481,4 +480,150 @@ def icon(name, attrs={"aria-hidden": "true"}, size="1.25em", classes=[]):
 
     return Markup(svg)
 
+
 app.jinja_env.globals["icon"] = icon
+
+
+def _sticker_print(sticker, size="default", quantity=1):
+
+    if not USE_QUEUE:
+        return __sticker_print(sticker, size=size, quantity=quantity)
+    else:
+        q = rq.queues["default"]
+        q.enqueue(__sticker_print, sticker=sticker, size=size, quantity=quantity)
+        return ""
+
+
+def __sticker_print(sticker, size="default", quantity=1):
+
+    from brother_ql.conversion import convert
+    from brother_ql.backends.helpers import send
+    from brother_ql.raster import BrotherQLRaster
+
+    if USE_QUEUE:
+        from rq import get_current_job
+        j = get_current_job()
+        j.meta["quantity_done"] = "processing"
+        j.save_meta()
+
+    if size == "default":
+        size = DEFAULT_PRINT_SIZE
+
+    with TemporaryDirectory(prefix="stickers_") as d:
+
+        D = Path(d)
+        before_dithering = D / "before_dithering.png"
+        after_dithering = D / "after_dithering.png"
+
+        with Image.open(sticker) as img:
+            img.load()
+            # Fix orientation depending if we want to print the image as large or small
+            if (size == "large" and img.height > img.width) \
+               or (size == "small" and img.width > img.height):
+                img = img.transpose(Image.Transpose.ROTATE_90)
+            img.save(before_dithering, format="PNG")
+
+        subprocess.run([
+            DIDDER_BIN,
+            "--height", LABEL_IDEAL_PIXEL_SIZE,
+            "--brightness", "0.1",
+            "--palette", "black white",
+            "--in", str(before_dithering),
+            "--out", str(after_dithering),
+            "edm",
+            "--serpentine", "FloydSteinberg"
+        ])
+
+        # Convert image to print instructions
+        with Image.open(after_dithering) as img:
+            img.load()
+            qlr = BrotherQLRaster(PRINTER_MODEL)
+            qlr.exception_on_warning = True
+            instructions = convert(qlr=qlr, rotate="90", label=LABEL, cut=False, images=[img])
+
+    if USE_QUEUE:
+        j.meta["quantity_done"] = 0
+        j.save_meta()
+
+    # Actual print using the instructions
+    for i in range(quantity):
+        if PRINTER == "dummy":
+            time.sleep(2)
+            ret = None
+        else:
+            ret = send(instructions=instructions, printer_identifier="file://" + PRINTER, blocking=True)
+
+        print(ret)
+
+        if USE_QUEUE:
+            j.meta["quantity_done"] = i+1
+            j.save_meta()
+        time.sleep(0.1)
+        #if not ret['did_print']:
+        #    logger.warning("'printing completed' ret not received.")
+        #if not ret['ready_for_next_job']:
+        #    logger.warning("'waiting to receive' ret not received.")
+        #if (not ret['did_print']) or (not ret['ready_for_next_job']):
+        #    logger.warning('Printing potentially not successful?')
+        #if ret['did_print'] and ret['ready_for_next_job']:
+        #    logger.info("Printing was successful. Waiting for the next job.")
+
+
+if USE_QUEUE == "true":
+    from flask_rq import RQ
+    from rq.job import Job
+    rq = RQ()
+    rq.init_app(app)
+
+    @app.route("/queue")
+    def queue():
+        queue = rq.queues["default"]
+
+        job_ids = set(queue.job_ids)
+
+        registries = [
+            queue.started_job_registry,
+            queue.finished_job_registry,
+            queue.failed_job_registry,
+            queue.deferred_job_registry,
+            queue.scheduled_job_registry,
+            queue.canceled_job_registry,
+        ]
+        for registry in registries:
+            job_ids.update(registry.get_job_ids())
+
+        jobs = Job.fetch_many(list(job_ids), connection=queue.connection)
+
+        def time_human(dt):
+            seconds = int(time.time()) - dt.timestamp()
+            if seconds is None or seconds > 2592000:
+                return "il y a ... super longtemps?!"
+            if seconds < 60:
+                return f"il y a {int(seconds)} seconde{'s' if int(seconds) != 1 else ''}"
+            elif seconds < 3600:
+                minutes = int(seconds // 60)
+                return f"il y a {minutes} minute{'s' if minutes != 1 else ''}"
+            elif seconds < 86400:
+                hours = int(seconds // 3600)
+                return f"il y a {hours} heure{'s' if hours != 1 else ''}"
+            else:
+                days = int(seconds // 86400)
+                return f"il y a {days} jour{'s' if days != 1 else ''}"
+
+        out = []
+        for job in jobs:
+            out.append({
+                "id": job.id,
+                "state": str(job.get_status()).split(".")[-1].lower(),
+                "enqueued_at_timestamp": job.enqueued_at.timestamp(),
+                "enqueued_at": time_human(job.enqueued_at),
+                "sticker": job.kwargs["sticker"],
+                "quantity": job.kwargs["quantity"],
+                "size": job.kwargs["size"],
+            })
+            if job.get_status() in ["started", "finished", "failed"]:
+                out[-1]["quantity_done"] = job.get_meta().get("quantity_done", None)
+
+        out = sorted(out, key=lambda j: j['enqueued_at_timestamp'], reverse=True)
+
+        return render_template("queue.html", jobs=out)

@@ -5,11 +5,11 @@ assets/fork*
 assets/tailwind*
 assets/htmx.min.js
 assets/icons
+assets/didder*
 venv
 __pycache__
 .cache
 *.save*
-scripts/didder*
 *gitignore
 *.woff2
 access.log

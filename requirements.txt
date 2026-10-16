@@ -5,3 +5,4 @@ python-slugify==8.0.4
 numpy==2.5.1
 python-dotenv
 #Pillow>=9
+Flask-RQ==1.0.0

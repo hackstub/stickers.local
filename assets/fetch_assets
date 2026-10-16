@@ -11,7 +11,7 @@ curl -sL https://cdn.jsdelivr.net/npm/htmx.org@4.0.0 > htmx.min.js
 
 # Icons from https://icones.js.org/collection/mdi
 mkdir -p icons
-for ICON in ph:heart-bold ph:printer-bold ph:x-bold ph:pencil-simple-bold ph:floppy-disk-back-bold ph:magnifying-glass-bold ph:stack-bold
+for ICON in ph:check-circle-bold ph:circle-notch-bold ph:warning-diamond-bold ph:heart-bold ph:printer-bold ph:x-bold ph:pencil-simple-bold ph:floppy-disk-back-bold ph:magnifying-glass-bold ph:stack-bold
 do
     curl -sL https://api.iconify.design/$ICON.svg > icons/$ICON.svg
 done
