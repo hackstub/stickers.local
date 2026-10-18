@@ -12,6 +12,9 @@ This is a web app to manage a collection of stickers and print them using a Brot
 ## Setup
 
 ```bash
+apt install fontconfig
+apt install redis-server # If you want to enable the print queue
+
 python3 -m venv venv
 source venv/bin/activate
 pip3 install -r requirements.txt
