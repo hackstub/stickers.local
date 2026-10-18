@@ -1,0 +1,15 @@
+[Unit]
+Description=Stickers printing daemon
+After=network.target
+
+[Service]
+User=stickers
+Group=stickers
+WorkingDirectory=/var/www/stickers.local/
+ExecStart=/var/www/stickers.local/venv/bin/flask rq worker
+ExecReload=/bin/kill -s HUP $MAINPID
+ExecStop=/bin/kill -s TERM $MAINPID
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

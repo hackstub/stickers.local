@@ -70,6 +70,13 @@ systemctl enable stickers --now
 
 # Check is is indeed running with
 systemctl status stickers
+
+# Same things for the printing worker daemon, if you enabled the print queue in .env
+cp systemd-worker.service /etc/systemd/system/stickers-worker.service
+# If needed, edit the conf with nano /etc/systemd/system/stickers-worker.service
+systemctl daemon-reload
+systemctl enable stickers-worker --now
+systemctl status stickers-worker
 ```
 
 ### `nginx`
