@@ -7,6 +7,7 @@ This is a web app to manage a collection of stickers and print them using a Brot
 - It relies on [the `brother_ql` python lib](https://github.com/pklaus/brother_ql)
 - The web front is built using [Flask](https://flask.palletsprojects.com/en/stable/), [Tailwind CSS](https://tailwindcss.com/) and [HTMX](https://four.htmx.org/)
 - Processing the image before printing is done with [Pillow](https://pypi.org/project/pillow/) (color/contrast manipulation, label generation), [Imagemagick](https://imagemagick.org/) (resize) and [Didder](https://github.com/makew0rld/didder) (dithering)
+- Optional printing queue uses [redis](https://redis.io/) and [RQ](https://python-rq.org/)/[Flask-RQ](https://flask-rq.readthedocs.io/)
 
 ## Setup
 
@@ -14,7 +15,6 @@ This is a web app to manage a collection of stickers and print them using a Brot
 python3 -m venv venv
 source venv/bin/activate
 pip3 install -r requirements.txt
-cd scripts
 
 (cd assets && bash fetch_assets)
 ```
@@ -45,7 +45,7 @@ flask run --debug
 
 ## Production deployment
 
-The naive approach is to just run `flask run --host 0.0.0.0` to expose it on the local network. But this requires to keep a terminal open running this command and only runs a single worker.
+The naive approach is to just run `flask run --host 0.0.0.0` to expose it on the local network. But this requires to keep a terminal open running this command and only runs a single worker (and Flask devs do not recommend the dev server to be used for production).
 
 A more long-term solution is to configure a systemd service that starts at boot. Under the hood, it uses Gunicorn which allows for multiple worker, dumps the logs in logfiles, etc
 
