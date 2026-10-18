@@ -434,7 +434,11 @@ def text_to_image(
     return img
 
 
-def list_fonts():
+def list_fonts() -> dict:
+    if not list(Path("assets/fonts").rglob("*.otf")) + list(Path("assets/fonts").rglob("*.ttf")):
+        print("Warning: there's no fonts (.otf or .ttf) at all in assets/fonts/ !")
+        return {}
+
     raw_list = (
         subprocess.getoutput("fc-scan --format '%{file}: %{family}\n' assets/fonts/")
         .strip()

@@ -32,6 +32,8 @@ cp env.example .env
 nano .env
 ```
 
+You can also put fonts (for text label generation) in `assets/fonts/`. For example you can find and download fonts at https://fontmeme.com/fonts/. You need to extract the `.otf` or `.ttf` into `assets/fonts/`.
+
 ## Development
 
 Start the dev server:
