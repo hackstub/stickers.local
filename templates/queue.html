@@ -24,7 +24,7 @@
                 {{ job.state }}
             {% endif %}
         </td>
-        <td class="px-3 py-1 w-1/2">{{ job.sticker }}</td>
+        <td class="px-3 py-1 w-1/2">{{ job.sticker.replace('assets/uploads/', '') }}</td>
         <td class="px-3 py-1 text-center">{% if job.quantity_done %}{{ job.quantity_done}}/{% endif %}{{ job.quantity }}</td>
         <td class="px-3 py-1 text-right">{{ job.enqueued_at }}</td>
     </tr>

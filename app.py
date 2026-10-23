@@ -661,7 +661,7 @@ def __sticker_print(sticker, size="default", quantity=1):
             img.load()
             qlr = BrotherQLRaster(PRINTER_MODEL)
             qlr.exception_on_warning = True
-            instructions = convert(qlr=qlr, rotate="90", label=LABEL, cut=False, images=[img])
+            instructions = convert(qlr=qlr, rotate="90", label=LABEL, cut=True, images=[img])
 
     if USE_QUEUE:
         j.meta["quantity_done"] = 0
