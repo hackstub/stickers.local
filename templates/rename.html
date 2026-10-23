@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block main %}
+    
+    <img alt="stickers.local" class="px-5 mt-10 mb-2 mx-auto max-h-40 object-contain" src="{{ url_for('static', filename='logo.png') }}">
+  
+    <div id="stickers-list" class="grid px-5 sm:px-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 sm:gap-2 pb-10">
+    {% for sticker in stickers %}
+        {% with sticker=sticker %}
+            {% include "sticker-rename.html" %}
+        {% endwith %}
+    {% endfor %}
+    </div>
+
+{% endblock %}

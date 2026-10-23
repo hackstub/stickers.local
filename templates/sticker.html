@@ -40,6 +40,12 @@
         >
             {{ icon('ph:pencil-simple-bold', classes=["block"], size="1.15em", attrs={"style": "margin-top: 0; margin-left:0.1em;"}) }}
         </button>
-        <img class="grow max-h-64 object-contain" src="{{ url_for('static', filename='uploads/' + sticker.relative) }}" width="{{ sticker.width }}" height="{{ sticker.height }}" loading="lazy">
+        <img
+            class="grow max-h-64 object-contain"
+            src="{{ url_for('static', filename='uploads/' + sticker.relative) }}"
+            width="{{ sticker.width }}"
+            height="{{ sticker.height }}"
+            loading="lazy"
+        >
     </div>
 </div>

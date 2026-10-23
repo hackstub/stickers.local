@@ -11,9 +11,23 @@ curl -sL https://cdn.jsdelivr.net/npm/htmx.org@4.0.0 > htmx.min.js
 
 # Icons from https://icones.js.org/collection/mdi
 mkdir -p icons
-for ICON in ph:check-circle-bold ph:circle-notch-bold ph:warning-diamond-bold ph:heart-bold ph:printer-bold ph:x-bold ph:pencil-simple-bold ph:floppy-disk-back-bold ph:magnifying-glass-bold ph:stack-bold
+ICONS="
+ph:check-circle-bold
+ph:circle-notch-bold
+ph:warning-diamond-bold
+ph:heart-bold
+ph:printer-bold
+ph:x-bold
+ph:pencil-simple-bold
+ph:floppy-disk-back-bold
+ph:magnifying-glass-bold
+ph:stack-bold
+"
+for ICON in $ICONS
 do
-    curl -sL https://api.iconify.design/$ICON.svg > icons/$ICON.svg
+    #curl -sL https://api.iconify.design/$ICON.svg > icons/$ICON.svg
+    # Stupid api.iconify may ban you in which can you need to :
+    curl -L https://raw.githubusercontent.com/phosphor-icons/core/main/raw/bold/${ICON#ph:}.svg > icons/$ICON.svg
 done
 
 # Shantell Sans font

@@ -1,0 +1,7 @@
+<div class="toast bg-red-300 text-red-800 my-5 p-3 w-full mx-auto rounded-lg text-xs"
+     hx-trigger="load delay:5s"
+     hx-get="{{ url_for('empty') }}"
+     hx-target="this"
+     hx-swap="outerHTML">
+    {{ icon('ph:x-bold') }} Erreur : {{ msg }}
+</div>

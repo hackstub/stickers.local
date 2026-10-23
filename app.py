@@ -24,25 +24,69 @@ DEFAULT_PRINT_SIZE = os.getenv("DEFAULT_PRINT_SIZE", "large")
 LABEL = os.getenv("LABEL", "62")
 LABEL_IDEAL_PIXEL_SIZE = os.getenv("LABEL_IDEAL_PIXEL_SIZE", "696")
 DIDDER_BIN = os.getenv("DIDDER_BIN", "assets/didder_1.3.0_linux_64-bit")
+TAGS = os.getenv("TAGS", "").split(",")
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 
 
+def assert_safe_filename(f: str) -> None:
+    assert ".." not in f and "'" not in f and ";" not in f, f"Caractères interdits dans le nom de fichier ou dossier « {f} »"
+
 class Sticker:
-    path: str | os.PathLike
+    path: Path
     width: int
     height: int
+    relative: str
+    collection: str
+    name: str
+    tags: list[str]
+    authors: list[str]
 
     def __init__(self, path: str | os.PathLike):
-        self.path = Path(path)
 
-        upload_folder = Path("assets/uploads")
+        self.path = Path(path)  # Path() is idempotent, not an issue if path is already a Path()
+        relative_to = self.path.relative_to(UPLOAD_FOLDER)
+        self.relative = str(relative_to)
+        self.collection = str(relative_to.parent)
+        raw_name, self.ext = self.path.name.rsplit(".", 1)
+        parts = raw_name.split("__")
+        self.name = parts[0]
+        self.tags = []
+        self.authors = []
+        for part in parts:
+            if part.startswith("#"):
+                self.tags.append(part.strip("#"))
+            elif part.startswith("@"):
+                self.authors.append(part.strip("@"))
+
+        self.width, self.height = Sticker.get_dimensions(self.path)
+
+    def metadata_to_path(self) -> str:
+
+        assert_safe_filename(self.name)
+        assert_safe_filename(self.collection)
+
+        parts = (
+            [self.name]
+            + [f"#{tag}" for tag in self.tags]
+            + [f"@{author}" for author in self.authors]
+        )
+        fullname = "__".join(parts) + "." + self.ext
+
+        return str(UPLOAD_FOLDER / self.collection / fullname)
+
+    @cache(name="sticker_meta", dir=".cache")
+    @staticmethod
+    def get_dimensions(path: Path) -> tuple[int, int]:
+        """Return (width, height) of the image"""
         try:
-            self.relative = str(self.path.relative_to(upload_folder))
-        except ValueError:
-            self.relative = str(self.path)
-
-        self.width, self.height = get_sticker_meta(self.path)
+            with Image.open(path) as im:
+                width, height = im.size
+        except Exception as e:
+            print(f"Failed to check image size for {path}: {e}")
+            return (0, 0)
+        else:
+            return (width, height)
 
     def __repr__(self):
         return f"path: <{self.path}> size:<{self.width}x{self.height}>"
@@ -51,6 +95,8 @@ class Sticker:
 app = Flask(__name__, static_url_path="/assets", static_folder="assets")
 app.config["UPLOAD_FOLDER"] = "assets/uploads"
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1000 * 1000
+
+UPLOAD_FOLDER = Path(app.config["UPLOAD_FOLDER"]).resolve()
 
 
 @app.route("/")
@@ -61,16 +107,14 @@ def home(collection=None, subcol=None, subsubcol=None):
 
     if not collection:
         collection = ""
-        folder = Path(app.config["UPLOAD_FOLDER"])
+        folder = UPLOAD_FOLDER
     else:
         if subcol:
             collection += "/" + subcol
         if subsubcol:
             collection += "/" + subsubcol
-        assert (
-            ".." not in collection and "'" not in collection and ";" not in collection
-        )
-        folder = Path(app.config["UPLOAD_FOLDER"]) / collection
+        assert_safe_filename(collection)
+        folder = UPLOAD_FOLDER / collection
 
     collections = sorted(
         [collection + "/" + str(s.name) for s in folder.iterdir() if s.is_dir()]
@@ -79,10 +123,11 @@ def home(collection=None, subcol=None, subsubcol=None):
 
     stickers = [s for s in folder.iterdir() if s.is_file()]
     stickers = sorted(stickers, key=lambda f: f.stat().st_mtime, reverse=True)
+    # FIXME : those next two lines seem convoluted, we can probably directly create the Sticker() objets
     stickers = [collection + "/" + str(s.name) for s in stickers]
     stickers = [s.strip("/") for s in stickers]
 
-    sticker_objects = [Sticker(Path(app.config["UPLOAD_FOLDER"]) / s) for s in stickers]
+    sticker_objects = [Sticker(UPLOAD_FOLDER / s) for s in stickers]
 
     return render_template(
         "index.html",
@@ -94,6 +139,85 @@ def home(collection=None, subcol=None, subsubcol=None):
         fonts=fonts,
     )
 
+
+@app.route("/rename")
+def rename():
+
+    collection = ""
+    stickers = [s for s in UPLOAD_FOLDER.iterdir() if s.is_file()]
+    stickers = sorted(stickers, key=lambda f: f.stat().st_mtime, reverse=True)
+    stickers = [collection + "/" + str(s.name) for s in stickers]
+    stickers = [s.strip("/") for s in stickers]
+
+    sticker_objects = [Sticker(UPLOAD_FOLDER / s) for s in stickers]
+
+
+    return render_template(
+        "rename.html",
+        stickers=sticker_objects,
+        available_tags=TAGS,
+    )
+
+
+@app.route("/stickers/rename", methods=["GET", "PATCH"])
+def rename_sticker():
+
+    if request.method == "PATCH":
+        relative = request.form.get("sticker")
+        rename = request.form.get("rename")
+        tag_add = request.form.get("tag-add")
+        tag_remove = request.form.get("tag-remove")
+
+        assert_safe_filename(relative)
+        s = Sticker(UPLOAD_FOLDER / relative)
+
+        if tag_add and tag_add not in s.tags:
+            s.tags.append(tag_add)
+        if tag_remove and tag_remove in s.tags:
+            s.tags.remove(tag_remove)
+        if rename:
+            rename = rename.strip().replace(" ", "_")
+
+        def sticker_already_exists(f: Path, ignore: Path|None =None) -> bool:
+           print(f)
+           print(f.exists())
+           if f.exists():
+               return True
+           relative_to = f.relative_to(UPLOAD_FOLDER)
+           parent = f.parent
+           basename = relative_to.name.rsplit(".", 1)[0].split("__")[0]
+           matches = list(parent.glob(f"{basename}.*")) + list(parent.glob(f"{basename}__*.*"))
+           print(matches)
+           if ignore and ignore in matches:
+               matches.remove(ignore)
+           print(matches)
+           return bool(matches)
+
+        previous_path = s.path
+        if rename:
+            s.name = rename
+        new_path = Path(s.metadata_to_path())
+        if sticker_already_exists(new_path, ignore=previous_path):
+            return error("Il y a déjà un sticker avec ce même nom", code=406)
+
+        s.path.rename(str(new_path))
+        s = Sticker(new_path)
+    else:
+        relative = request.args.get("sticker")
+        s = Sticker(UPLOAD_FOLDER / relative)
+
+    return render_template(
+        "sticker-rename.html",
+        sticker=s,
+        available_tags=TAGS,
+    )
+
+def error(msg, code=400):
+     return render_template("error.html", msg=msg), code
+
+@app.route("/empty")
+def empty():
+    return ""
 
 @app.route("/stickers", methods=["POST"])
 def sticker_upload():
@@ -110,29 +234,24 @@ def sticker_upload():
 
     collection = request.form.get("collection")
     if collection != "":
-        assert (
-            collection
-            and ".." not in collection
-            and "'" not in collection
-            and ";" not in collection
-        )
-        collection_path = app.config["UPLOAD_FOLDER"] + "/" + collection
-        assert Path(collection_path).exists()
+        assert_safe_filename(collection)
+        collection_path = UPLOAD_FOLDER / collection
+        assert collection_path.exists()
     else:
-        collection_path = app.config["UPLOAD_FOLDER"]
+        collection_path = UPLOAD_FOLDER
 
     file = request.files["file"]
     # If the user does not select a file, the browser submits an
     # empty file without a filename.
     if not file or not file.filename.strip():
-        return "Pas de fichier sélectionné !?", 499
+        return "Pas de fichier sélectionné !?", 406
     if not allowed_file(file.filename):
-        return "Ohno, cette extension n'est pas autorisée!", 499
+        return "Ohno, cette extension n'est pas autorisée!", 406
 
     filename = secure_filename(file.filename)
-    path = os.path.join(collection_path, filename)
-    if os.path.exists(path):
-        return "Il existe déjà un fichier avec ce nom", 499
+    path = collection_path / filename
+    if path.exists():
+        return "Il existe déjà un fichier avec ce nom", 406
     file.save(path)
 
     return render_template("sticker.html", sticker=Sticker(path))
@@ -157,16 +276,14 @@ def sticker_print():
             "large",
             "small",
         ], f"La taille '{size}' est incorrecte"
-        assert (
-            name and ".." not in name and "'" not in name and ";" not in name
-        ), "Caractère interdits dans le nom du sticker"
-        path = app.config["UPLOAD_FOLDER"] + "/" + name
-        assert Path(path).exists(), f"Le fichier '{name}' n'existe pas ?"
+        assert_safe_filename(name)
+        path = UPLOAD_FOLDER / name
+        assert path.exists(), f"Le fichier '{name}' n'existe pas ?"
     except Exception as e:
         return f"Erreur: {e}", 400
 
     try:
-        return _sticker_print(path, size=size, quantity=quantity)
+        return _sticker_print(str(path), size=size, quantity=quantity)
     except Exception as e:
         import traceback
         return str(traceback.format_list(traceback.extract_stack())), 400
@@ -214,10 +331,10 @@ def sticker_print():
 @app.route("/stickers/delete", methods=["DELETE"])
 def sticker_delete():
     name = request.args.get("sticker")
-    assert name and ".." not in name and "'" not in name and ";" not in name
-    path = app.config["UPLOAD_FOLDER"] + "/" + name
-    assert Path(path).exists()
-    os.unlink(path)
+    assert_safe_filename(name)
+    path = UPLOAD_FOLDER / name
+    assert path.exists()
+    path.unlink()
     return ""
 
 
@@ -229,15 +346,16 @@ def search():
 
     matches = [
         f
-        for f in list(Path(app.config["UPLOAD_FOLDER"]).rglob("*"))
+        for f in list(UPLOAD_FOLDER.rglob("*"))
         if f.is_file() and pattern in str(f)
     ]
 
     stickers = sorted(matches, key=lambda f: f.stat().st_mtime, reverse=True)
-    stickers = [str(s).replace(app.config["UPLOAD_FOLDER"], "") for s in stickers]
+    # FIXME : those next two lines seem convoluted, we can probably directly create the Sticker() objets
+    stickers = [str(s).replace(str(UPLOAD_FOLDER), "") for s in stickers]
     stickers = [s.strip("/") for s in stickers]
 
-    sticker_objects = [Sticker(Path(app.config["UPLOAD_FOLDER"]) / s) for s in stickers]
+    sticker_objects = [Sticker(UPLOAD_FOLDER / s) for s in stickers]
 
     return render_template(
         "index.html",
@@ -280,9 +398,9 @@ def sticker_process():
     assert brightness >= 0 and brightness <= 5
     assert contrast >= 0 and contrast <= 5
     assert brightness2 >= 0 and brightness2 <= 5
-    assert name and ".." not in name and "'" not in name and ";" not in name
-    path = app.config["UPLOAD_FOLDER"] + "/" + name
-    assert Path(path).exists()
+    assert_safe_filename(name)
+    path = UPLOAD_FOLDER / name
+    assert path.exists()
 
     with Image.open(path) as im:
         if im.mode != "L":
@@ -293,13 +411,13 @@ def sticker_process():
         im = ImageEnhance.Brightness(im).enhance(brightness2)
 
         if request.method == "POST":
-            path_without_ext, ext = path.rsplit(".", 1)
+            path_without_ext, ext = str(path).rsplit(".", 1)
             new_name = f"{path_without_ext}_bw{decolor}_b{brightness}c{contrast}b2{brightness2}.{ext}"
             pil_format = ext.upper()
             if pil_format == "JPG":
                 pil_format = "JPEG"
             im.save(new_name, format=pil_format)
-            return render_template("sticker.html", sticker=Sticker(new_name))
+            return render_template("sticker.html", sticker=Sticker(Path(new_name)))
         else:
             buffer = BytesIO()
             im.save(buffer, format="JPEG")
@@ -374,26 +492,13 @@ def label_generate():
                 print(e)
                 return "Ohno ! L'impression a échoué ! Il faut regarder les logs !", 400
         else:
-            path = f"assets/uploads/{slug}.png"
+            path = UPLOAD_FOLDER / f"{slug}.png"
             img.save(path, format="PNG")
             return render_template("sticker.html", sticker=Sticker(path))
     else:
         buffer = BytesIO()
         img.save(buffer, format="PNG")
         return base64.b64encode(buffer.getvalue()).decode()
-
-
-@cache(name="sticker_meta", dir=".cache")
-def get_sticker_meta(file_path: str | os.PathLike) -> tuple[int, int]:
-    """Return (width, height) of the image"""
-    try:
-        with Image.open(file_path) as im:
-            width, height = im.size
-    except Exception as e:
-        print(f"Failed to check image size for {file_path}: {e}")
-        return (0, 0)
-    else:
-        return (width, height)
 
 
 def text_to_image(
@@ -471,14 +576,22 @@ def icon(name, attrs={"aria-hidden": "true"}, size="1.25em", classes=[]):
     assert os.path.exists(path), f"Icon {path} doesn't exist, maybe you need to re-fetch assets"
 
     attrs["class"] = ' '.join(["icon"] + classes)
+    attrs["width"] = size
+    attrs["height"] = size
     attrs = ' '.join([f'{k}="{v}"' for k, v in attrs.items()])
 
     svg = path.read_text(encoding="utf-8")
     svg = re.sub(
         r'width="1em" height="1em"',
-        f'width="{size}" height="{size}"',
+        '',
         svg,
         count=1
+    )
+    svg = re.sub(
+        r"<circle ",
+        '<circle fill="none"',
+        svg,
+        count=1,
     )
     svg = re.sub(
         r"<svg(?=[\s>])",

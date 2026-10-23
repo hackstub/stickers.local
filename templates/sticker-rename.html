@@ -1,0 +1,46 @@
+<div class="sticker-container" width="{{ sticker.width }}" height="{{ sticker.height }}">
+    <form 
+        autocomplete="off"
+        class="relative flex flex-col text-center rounded-md h-full"
+        hx-patch="{{ url_for('rename_sticker') }}"
+        hx-trigger="change throttle:300ms, submit throttle:300ms""
+        hx-target="closest .sticker-container"
+        hx-swap="outerHTML"
+        hx-status:4xx="target: 'closest .sticker-container form' swap:append"
+        hx-status:5xx="target: 'closest .sticker-container form' swap:append"
+    >
+        <img
+            class="grow max-h-64 object-contain"
+            src="{{ url_for('static', filename='uploads/' + sticker.relative) }}"
+            width="{{ sticker.width }}"
+            height="{{ sticker.height }}"
+            loading="lazy"
+        >
+        <input type="hidden" name="sticker" value="{{ sticker.relative }}">
+        <input class="border border-dashed border-gray-400 rounded-md text-xs" type="text" name="rename" value="{{ sticker.name }}" autocomplete="off">
+        <div class="pt-1 flex flex-wrap items-center justify-center gap-1.5">
+            {% for tag in sticker.tags %}
+            <span class="inline-flex items-center rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-600">
+              #{{ tag }}
+              <button class="ps-1" type="button" 
+                  hx-target="closest .sticker-container"
+                  hx-swap="outerHTML"
+                  hx-status:4xx="target: 'closest .sticker-container form' swap:append"
+                  hx-status:5xx="target: 'closest .sticker-container form' swap:append"
+                  hx-patch="{{ url_for('rename_sticker') }}"
+                  hx-vals:append="tag-remove: {{ tag }}">
+                    {{ icon('ph:x-bold', size="0.85em") }}
+              </button>
+            </span>
+            {% endfor %}
+            <select name="tag-add" class="inline !bg-gray-100 text-sm p-0 text-center w-6 h-6 leading-none" style="background-image: none; border: none; box-shadow: none;" hx-on:load="this.selectedIndex = 0">
+                <option value="" selected disabled>+</option>
+                {% for tag in available_tags %}
+                {% if tag not in sticker.tags %}
+                <option value="{{ tag }}">{{ tag.replace('_', ' ') }}</option>
+                {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+</div>
