@@ -46,15 +46,35 @@
     {% endfor %}
     </div>
 
-    <div id="stickers-list" class="grid px-5 sm:px-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 sm:gap-2 pb-10">
-    {% for sticker in stickers %}
-        {% with sticker=sticker %}
-            {% include "sticker.html" %}
-        {% endwith %}
-    {% endfor %}
+    <div id="stickers-list-wrapper">
+        <div id="stickers-list" class="grid px-5 sm:px-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 sm:gap-2 pb-10">
+        {% for sticker in stickers[load_from:load_to] %}
+            {% with sticker=sticker %}
+                {% include "sticker.html" %}
+            {% endwith %}
+        {% endfor %}
+        </div>
+
+        <div id="load-moar-button"
+              class="text-center {% if stickers|length < load_to %}hidden{% endif %}"
+              hx-swap-oob="true"
+        >
+            <button
+                style="background-image: url({{ url_for('static', filename='button4.svg')}}); background-position: center; background-repeat: no-repeat; background-size: cover; width: 8.5rem; height: 3.5rem; color: #da00a4;"
+
+               class="rounded-lg text-sm !font-bold mb-4 py-2 px-4 text-center leading-tight"
+               hx-get="{{ url_for(request.endpoint) }}?load_more={{ load_to }}"
+               hx-select="#stickers-list > *"
+               hx-target="#stickers-list"
+               hx-swap="beforeend"
+            >
+                Moar!<br/>
+                ٩(◕‿◕｡)۶
+            </button>
+        </div>
     </div>
-        
-    <hr class="pb-10"/>
+
+    <hr class="mb-10"/>
 
     <div class="flex flex-row justify-between px-12">
       <div class="text-center w-1/2 pe-5">

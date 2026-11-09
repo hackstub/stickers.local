@@ -12,7 +12,7 @@ from slugify import slugify
 import numpy as np
 from markupsafe import Markup
 from PIL import Image, ImageEnhance, ImageDraw, ImageFont
-from flask import Flask, request, redirect, render_template, jsonify
+from flask import Flask, request, redirect, render_template
 from werkzeug.utils import secure_filename
 from persist_cache import cache
 
@@ -31,6 +31,7 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 
 def assert_safe_filename(f: str) -> None:
     assert ".." not in f and "'" not in f and ";" not in f, f"Caractères interdits dans le nom de fichier ou dossier « {f} »"
+
 
 class Sticker:
     path: Path
@@ -105,6 +106,10 @@ UPLOAD_FOLDER = Path(app.config["UPLOAD_FOLDER"]).resolve()
 @app.route("/collection/<collection>/<subcol>/<subsubcol>")
 def home(collection=None, subcol=None, subsubcol=None):
 
+    load_more = request.args.get("load_more")
+    load_from = int(load_more) if load_more else 0
+    load_to = load_from + 50
+
     if not collection:
         collection = ""
         folder = UPLOAD_FOLDER
@@ -137,6 +142,8 @@ def home(collection=None, subcol=None, subsubcol=None):
         is_root_collection=not bool(collection),
         printer_is_online=os.path.exists(PRINTER),
         fonts=fonts,
+        load_from=load_from,
+        load_to=load_to
     )
 
 
