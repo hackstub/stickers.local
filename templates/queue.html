@@ -3,7 +3,7 @@
 
 <h2 class="text-center pt-10 pb-10">File d'impression</h2>
 
-<table class="w-full">
+<table id="queue" class="w-full" hx-trigger="every 2s" hx-get="{{ url_for("queue") }}" hx-select="#queue > *" hw-swap="innerMorph">
     <tr>
         <th></th>
         <th>Sticker</th>
@@ -11,7 +11,7 @@
         <th></th>
     </tr>
     {% for job in jobs %}
-    <tr class="{% if job.state == "finished" %}bg-green-200{% elif job.state == 'started' %}bg-blue-200{% elif job.state == 'failed'%}bg-red-200{% endif %}">
+    <tr class="{% if job.state == "finished" %}bg-green-200{% elif job.state == "started" %}bg-blue-200{% elif job.state == "failed"%}bg-red-200{% endif %}">
         <td class="px-3 py-1 w-5">
             {% if job.state == "queued" %}
             {% elif job.state == "started" %}
