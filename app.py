@@ -650,7 +650,7 @@ def _sticker_print(sticker, size="default", quantity=1):
         return __sticker_print(sticker, size=size, quantity=quantity)
     else:
         q = rq.queues["default"]
-        q.enqueue(__sticker_print, sticker=sticker, size=size, quantity=quantity)
+        q.enqueue(__sticker_print, sticker=sticker, size=size, quantity=quantity, failure_ttl=24 * 3600, result_ttl=1200)
         return ""
 
 
@@ -772,12 +772,16 @@ if USE_QUEUE == "true":
 
         out = []
         for job in jobs:
+            try:
+                sticker = str(Path(job.kwargs["sticker"]).relative_to(UPLOAD_FOLDER))
+            except ValueError:
+                sticker = str(job.kwargs["sticker"])
             out.append({
                 "id": job.id,
                 "state": str(job.get_status()).split(".")[-1].lower(),
                 "enqueued_at_timestamp": job.enqueued_at.timestamp(),
                 "enqueued_at": time_human(job.enqueued_at),
-                "sticker": job.kwargs["sticker"],
+                "sticker": sticker,
                 "quantity": job.kwargs["quantity"],
                 "size": job.kwargs["size"],
             })
