@@ -522,7 +522,7 @@ def label_generate():
 
         slug = slugify(text, separator="_", max_length=100)
         if action == "print":
-            path = f"/tmp/{slug}.png"
+            path = Path(f"./.tmp/{slug}.png").resolve()
             img.save(path, format="PNG")
             try:
                 return _sticker_print(path, size=print_size, quantity=1)
