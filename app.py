@@ -233,19 +233,19 @@ def empty():
 @app.route("/scan")
 def scan():
 
-    #scanners_infos = subprocess.check_output("lsusb | grep -i scanner", shell=True)
-    #scanners_infos = scanners_infos.decode().strip().split("\n")
-    #if len(scanners_infos) != 1:
-    #    return "Uhoh, pas trouvé quel scanner utiliser ? 'lsusb | grep -i scanner' renvoie : {scanners_infos}"
-    #infos = scanners_infos[0].split()
+    scanners_infos = subprocess.check_output("lsusb | grep -i scanner", shell=True)
+    scanners_infos = scanners_infos.decode().strip().split("\n")
+    if len(scanners_infos) != 1:
+        return "Uhoh, pas trouvé quel scanner utiliser ? 'lsusb | grep -i scanner' renvoie : {scanners_infos}"
+    infos = scanners_infos[0].split()
 
     # Typically something like: Bus 001 Device 018: ID xxxx:xxxx FooBar, Inc. USB SCANNER
-    #device_id = infos[1] + ":" + infos[3].strip(":")
+    device_id = infos[1] + ":" + infos[3].strip(":")
 
-    #raw_scan_tmp = Path(app.config["UPLOAD_FOLDER"] + "/../raw_scan_tmp.jpeg").resolve()
+    raw_scan_tmp = Path(app.config["UPLOAD_FOLDER"] + "/../raw_scan_tmp.jpeg").resolve()
 
-    #cmd = ["scanimage", f"--device-name=pl12x:libusb:{device_id}", "--format=jpeg", "--mode=Gray", f"--output-file='{raw_scan_tmp}'"]
-    #subprocess.check_call(cmd)
+    cmd = ["scanimage", f"--device-name=pl12x:libusb:{device_id}", "--format=jpeg", "--mode=Gray", f"--output-file={raw_scan_tmp}"]
+    subprocess.check_call(cmd)
 
     return render_template("scan.html")
 
