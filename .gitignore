@@ -6,6 +6,8 @@ assets/tailwind*
 assets/htmx.min.js
 assets/icons
 assets/didder*
+assets/cropper.min.*
+assets/raw_scan_tmp.jpeg
 venv
 __pycache__
 .cache

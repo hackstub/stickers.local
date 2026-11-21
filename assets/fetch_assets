@@ -9,6 +9,10 @@ curl -sL https://cdn.tailwindcss.com?plugins=forms > tailwind-css.js
 # HTMX
 curl -sL https://cdn.jsdelivr.net/npm/htmx.org@4.0.0 > htmx.min.js
 
+# Cropper.js
+curl -sL https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css > cropper.min.css
+curl -sL https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.js > cropper.min.js
+
 # Icons from https://icones.js.org/collection/mdi
 mkdir -p icons
 ICONS="

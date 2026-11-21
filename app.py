@@ -12,7 +12,7 @@ from slugify import slugify
 import numpy as np
 from markupsafe import Markup
 from PIL import Image, ImageEnhance, ImageDraw, ImageFont
-from flask import Flask, request, redirect, render_template
+from flask import Flask, request, redirect, render_template, make_response
 from werkzeug.utils import secure_filename
 from persist_cache import cache
 
@@ -143,7 +143,8 @@ def home(collection=None, subcol=None, subsubcol=None):
         printer_is_online=os.path.exists(PRINTER),
         fonts=fonts,
         load_from=load_from,
-        load_to=load_to
+        load_to=load_to,
+        enable_scan="scanner" in subprocess.check_output(["lsusb"]).decode().lower()
     )
 
 
@@ -219,15 +220,40 @@ def rename_sticker():
         available_tags=TAGS,
     )
 
+
 def error(msg, code=400):
      return render_template("error.html", msg=msg), code
+
 
 @app.route("/empty")
 def empty():
     return ""
 
+
+@app.route("/scan")
+def scan():
+
+    #scanners_infos = subprocess.check_output("lsusb | grep -i scanner", shell=True)
+    #scanners_infos = scanners_infos.decode().strip().split("\n")
+    #if len(scanners_infos) != 1:
+    #    return "Uhoh, pas trouvé quel scanner utiliser ? 'lsusb | grep -i scanner' renvoie : {scanners_infos}"
+    #infos = scanners_infos[0].split()
+
+    # Typically something like: Bus 001 Device 018: ID xxxx:xxxx FooBar, Inc. USB SCANNER
+    #device_id = infos[1] + ":" + infos[3].strip(":")
+
+    #raw_scan_tmp = Path(app.config["UPLOAD_FOLDER"] + "/../raw_scan_tmp.jpeg").resolve()
+
+    #cmd = ["scanimage", f"--device-name=pl12x:libusb:{device_id}", "--format=jpeg", "--mode=Gray", f"--output-file='{raw_scan_tmp}'"]
+    #subprocess.check_call(cmd)
+
+    return render_template("scan.html")
+
+
 @app.route("/stickers", methods=["POST"])
 def sticker_upload():
+
+    redirect_after = request.args.get("redirect_after") or False
 
     def allowed_file(filename):
         return (
@@ -239,7 +265,7 @@ def sticker_upload():
         print("No file part")
         return redirect(request.url)
 
-    collection = request.form.get("collection")
+    collection = request.form.get("collection", "")
     if collection != "":
         assert_safe_filename(collection)
         collection_path = UPLOAD_FOLDER / collection
@@ -261,7 +287,10 @@ def sticker_upload():
         return "Il existe déjà un fichier avec ce nom", 406
     file.save(path)
 
-    return render_template("sticker.html", sticker=Sticker(path))
+    r = make_response(render_template("sticker.html", sticker=Sticker(path)))
+    if redirect_after:
+        r.headers["HX-Redirect"] = "/"
+    return r
 
 
 @app.route("/stickers/print", methods=["POST"])
@@ -372,6 +401,8 @@ def search():
         is_root_collection=False,
         printer_is_online=os.path.exists(PRINTER),
         fonts=fonts,
+        load_from=0,
+        load_to=1000,
     )
 
 
