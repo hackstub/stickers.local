@@ -12,7 +12,7 @@ This is a web app to manage a collection of stickers and print them using a Brot
 ## Setup
 
 ```bash
-apt install fontconfig
+apt install fontconfig python3-venv
 apt install redis-server # If you want to enable the print queue
 
 python3 -m venv venv
@@ -22,7 +22,7 @@ pip3 install -r requirements.txt
 (cd assets && bash fetch_assets)
 ```
 
-Download the appropriate executable of [didder](https://github.com/makew0rld/didder/releases/tag/v1.3.0) in `assets/`
+Download the appropriate executable of [didder](https://github.com/makew0rld/didder/releases/tag/v1.3.0) in `assets/`. Don't forget to make sure to `chmod +x` !
 
 **IMPORTANT** : to be able to access the printer, your user needs to be in the `lp` group : `usermod -a -G lp $USER`. This requires to restart your unix session for this to be fully propagated. The simplest way is typically to reboot the entire computer.
 

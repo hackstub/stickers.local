@@ -19,7 +19,7 @@ from persist_cache import cache
 load_dotenv()
 PRINTER = os.getenv("PRINTER", "/dev/usb/lp0")
 PRINTER_MODEL = os.getenv("PRINTER_MODEL", "QL-570")
-USE_QUEUE = os.getenv("USE_QUEUE", "false")
+USE_QUEUE = os.getenv("USE_QUEUE", "false").lower() != "false"
 DEFAULT_PRINT_SIZE = os.getenv("DEFAULT_PRINT_SIZE", "large")
 LABEL = os.getenv("LABEL", "62")
 LABEL_IDEAL_PIXEL_SIZE = os.getenv("LABEL_IDEAL_PIXEL_SIZE", "696")
@@ -99,6 +99,8 @@ app.config["MAX_CONTENT_LENGTH"] = 16 * 1000 * 1000
 
 UPLOAD_FOLDER = Path(app.config["UPLOAD_FOLDER"]).resolve()
 
+is not UPLOAD_FOLDER.exists():
+    print("Uhoh, le dossier assets/uploads n'existe pas, il faudrait le créer !")
 
 @app.route("/")
 @app.route("/collection/<collection>")
